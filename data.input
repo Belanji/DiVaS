@@ -1,0 +1,16 @@
+nz         200
+
+K         1.00
+alpha     1.00
+D_C       1.00
+
+
+ti          0.0
+tf          0.4
+timeprint   0.2
+dt          1e-3
+
+
+#initial_conditions  read_from_file
+#ic_file             ic_file.dat
+#output_file         output_file.dat
