@@ -20,7 +20,7 @@ struct lc_cell
 
 };
 
-int frank_energy (double t,
+int RhsFunction (double t,
 		  const double rho[],
 		  double Rhs[],
 		  void  * params);
@@ -32,16 +32,13 @@ int jacobian(double t,
 	     void * params);
 
 
-int print_rho_time( const double *,
-		    const double  ,
-		    const double  ,
-		    const int );
 
 int print_snapshot_to_file(const double *,
 			   const double  ,
 			   const double  ,
 			   const int     ,
-			   FILE   *);
+                           const char *  ,
+			   int   );
 
 void print_log_file(const struct lc_cell,
 		    const double ,

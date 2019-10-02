@@ -14,7 +14,6 @@ const static double pi=3.141592653589793;
 
 int main (int argc, char * argv[]) {
 
-  const double pi=3.141592653589793;
   double  * rho;
   struct lc_cell lc_environment;
   double  tf=50.0;
@@ -22,11 +21,11 @@ int main (int argc, char * argv[]) {
   double timeprint=0.2;
   FILE * time_file, * snapshot_file;
   const char * initial_conditions="standard";
-  const char * time_file_name="rho_bottom_middle_top.dat";
-  const char * output_file_name="rho_time.dat";
+  const char * time_file_name="sigma_time.dat";
+  const char * output_file_name="rho_time";
   int timesteper_kind_flag=0;
   int nz;
-
+  int  snapshot_number=0;
 
   //Standard values:
   strcpy(lc_environment.initial_conditions,initial_conditions);
@@ -66,7 +65,7 @@ int main (int argc, char * argv[]) {
   time=lc_environment.ti;
   
   //Starting the PDE solver:
-  gsl_odeiv2_system sys = {frank_energy, jacobian, nz+2, &lc_environment};
+  gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+2, &lc_environment};
 
 
   //Choose the integrator:
@@ -74,24 +73,22 @@ int main (int argc, char * argv[]) {
   //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
 
 
-  gsl_odeiv2_driver_set_hmax (pde_driver , dt );
-
-
-  time_file=fopen(time_file_name,"w");
-  snapshot_file=fopen(lc_environment.output_file_name,"w");
-
-  
+  gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
   rho= (double *) malloc( (nz+2)*sizeof(double) );
 
 
   if ( strcmp(lc_environment.initial_conditions,"standard") == 0 )
     {
-      for (int ii=1; ii<=nz;ii++)
+
+
+      rho[0]=lc_environment.sigma0[0];
+      for (int ii=1; ii<nz+1;ii++)
 	{
 
 	  rho[ii]=lc_environment.rho0;
 	  
-	};
+	}
+      rho[nz+1]=lc_environment.sigma0[1];
     }
   else if ( strcmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
     {
@@ -144,12 +141,15 @@ int main (int argc, char * argv[]) {
   
     };
 
-    fprintf(time_file,"#time rho[bottom]  rho[middle] rho[top] \n");
-  fprintf(time_file,"%f  %f  %f  %f\n",time, rho[0],rho[nz/2], rho[nz]);
-
+  time_file=fopen(time_file_name,"w");
+  fprintf(time_file,"#time   sigma_b   sigma_t\n");
+  fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
   
-  print_snapshot_to_file(rho,time,dz,nz,snapshot_file);
+  print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+  exit(0);
 
+
+  snapshot_number++;
 
   printf("time=%lf/%lf\n",time,tf);	
   while(time <tf)
@@ -166,8 +166,10 @@ int main (int argc, char * argv[]) {
 	};
 
       printf("time=%lf/%lf\n",time,tf);
-      print_snapshot_to_file(rho,time,dz,nz,snapshot_file);
-      fprintf(time_file,"%f  %f  %f  %f\n",time, rho[0],rho[(nz)/2], rho[nz+1]);
+      print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+      snapshot_number++;
+
+      fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
       
 	
     };
@@ -176,7 +178,6 @@ int main (int argc, char * argv[]) {
   gsl_odeiv2_driver_free (pde_driver);
   free(rho);
   fclose(time_file);
-  fclose(snapshot_file);
   return 0;
 
 
@@ -290,48 +291,32 @@ int print_snapshot_to_file(const double * rho,
 			   const double time,
 			   const double dz,
 			   const int nz,
-			   FILE * snapshot_file)
+                           const char * output_file_prefix,
+			   int  snapshot_number)
 {
 
-      fprintf(snapshot_file,"#time=%f\n",time);
-
-      for(int ii=1;ii<nz+2;ii++)
-	{
-	  
-	  fprintf(snapshot_file,"%f  %f\n",ii*dz,rho[ii]);
-      
-
-	};
-      fprintf(snapshot_file,"\n\n");
-
-};
-
-int print_rho_time( const double * rho,
-		    const double time,
-		    const double dz,
-		    const int nz)
-			       
-{
   FILE * snapshot_file;
-  char snap_name[50];
+  char output_file_name[200];
 
-  sprintf(snap_name,"time=%f.dat",time);
-  snapshot_file=fopen(snap_name,"w");
+  
+  sprintf(output_file_name,"%s_%d.dat",output_file_prefix,snapshot_number);
 
-  fprintf(snapshot_file,"#i  nx        ny         nz         rho   time=%f, dz=%f\n",time,dz);
+  snapshot_file=fopen(output_file_name,"w");
+  fprintf(snapshot_file,"#z  rho(z)\n");
 
-  for(int ii=0;ii<nz;ii++)
+  
+  for(int ii=1; ii<nz+2;ii++)
     {
-
-      fprintf(snapshot_file,"%i  %f  %f  %f  %f\n",ii,cos(rho[ii]),sin(rho[ii]), 0.0, rho[ii]);
+	  
+      fprintf(snapshot_file,"%f  %f\n",(ii-1)*dz,rho[ii]);
       
 
     };
-
-  fclose(snapshot_file);
+  fprintf(snapshot_file,"\n\n");
   
-  return 0;
+  fclose(snapshot_file);
 };
+
 
 
 void print_log_file(const struct lc_cell lc,
@@ -340,11 +325,20 @@ void print_log_file(const struct lc_cell lc,
 		    const char something[])
 {
 
-  printf("\n\n Parameters values used:\n\n");
-  printf( "K, alpha, D_c:                        %lf  %lf  %lf\n",lc.k,lc.alpha,lc.D_c );
-  printf( "maximum timestep (dt):      %lf \n",dt);
+  printf("\n\nParameters values used:\n\n");
+  printf( "cell length:      %lf   \n",lc.cell_length);
   printf( "Number of Layers(Nz):       %d  \n", lc.nz);
-  printf( "cell length:                %lf \n",lc.cell_length);  
+  printf( "K, alpha, D_c:  %lf  %lf  %lf\n",lc.k,lc.alpha,lc.D_c );
+  printf("rho_0:  %lf\n", lc.rho0);
+
+  printf("\nBoundary conditions:\n\n");
+  
+  printf( "sigma0_b, tau_b, kappa_b:  %lf  %lf  %lf\n",lc.sigma0[0],lc.tau[0],lc.kappa[0] );
+  printf( "sigma0_t, tau_t, kappa_t:  %lf  %lf  %lf\n",lc.sigma0[1],lc.tau[1],lc.kappa[1] );
+
+
+  printf("\nTime parameters:\n\n");
+  printf( "maximum timestep (dt):      %lf \n",dt);
   printf( "Simulation time:            %lf  \n\n",tf);
     
 };

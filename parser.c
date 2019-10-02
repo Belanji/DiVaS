@@ -27,11 +27,11 @@ void parse_input_file(struct lc_cell  * lc,
 		      double * dt )
 {
 
-  char parser[80];
+  char parser[120];
   char garbage[400];
   int error_handler;
 
-  while (   scanf("%79s",parser) != EOF )
+  while (   scanf("%119s",parser) != EOF )
     {
 
 
@@ -78,6 +78,40 @@ void parse_input_file(struct lc_cell  * lc,
 	{
 
 	  error_handler=scanf("%lf",&lc->D_c);
+
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+	  
+	  fgets(garbage,400,stdin);
+
+
+	}
+      else if ( strcasecmp(parser,"cell_length") == 0 || strcasecmp(parser,"cell_size") == 0 )
+	{
+
+	  error_handler=scanf("%lf",&lc->cell_length);
+
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+	  
+	  fgets(garbage,400,stdin);
+
+
+	}
+      else if ( strcasecmp(parser,"rho0") == 0 || strcasecmp(parser,"initial_density") == 0 )
+	{
+
+	  error_handler=scanf("%lf",&lc->rho0);
 
 	  if (error_handler <= 0 )
 	    {
@@ -159,7 +193,7 @@ void parse_input_file(struct lc_cell  * lc,
 
 
 	}
-            else if ( strcasecmp(parser,"sigma0_b") == 0 )
+      else if ( strcasecmp(parser,"sigma0_b") == 0 )
 	{
 
 	  error_handler=scanf("%lf",&(lc->sigma0[0]));
