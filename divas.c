@@ -141,17 +141,16 @@ int main (int argc, char * argv[]) {
   
     };
 
+  printf("\n\nStarting calculations\n\n");
+  
   time_file=fopen(time_file_name,"w");
   fprintf(time_file,"#time   sigma_b   sigma_t\n");
   fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
   
   print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
-  exit(0);
-
-
+  printf("snapshot %d: %lf\n",snapshot_number,time);
   snapshot_number++;
 
-  printf("time=%lf/%lf\n",time,tf);	
   while(time <tf)
     {
 
@@ -165,7 +164,7 @@ int main (int argc, char * argv[]) {
    
 	};
 
-      printf("time=%lf/%lf\n",time,tf);
+      printf("snapshot %d: %lf\n",snapshot_number,time);
       print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
       snapshot_number++;
 
