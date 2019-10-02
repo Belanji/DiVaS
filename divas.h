@@ -34,7 +34,8 @@ int jacobian(double t,
 
 
 int print_snapshot_to_file(const double *,
-			   const double  ,
+                           const double  ,
+                           const double  ,
 			   const double  ,
 			   const int     ,
                            const char *  ,

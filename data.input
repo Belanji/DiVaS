@@ -3,7 +3,7 @@ cell_length 17.
 rho0       2
 
 K         1.10
-alpha     1.20
+alpha     0.20
 D_C       1.40
 
 sigma0_b  1.0

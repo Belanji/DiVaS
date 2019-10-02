@@ -17,7 +17,7 @@ int main (int argc, char * argv[]) {
   double  * rho;
   struct lc_cell lc_environment;
   double  tf=50.0;
-  double time, dz,  dt=1e-3;
+  double time, dz,  lz, dt=1e-3;
   double timeprint=0.2;
   FILE * time_file, * snapshot_file;
   const char * initial_conditions="standard";
@@ -60,7 +60,8 @@ int main (int argc, char * argv[]) {
 
 
   nz=lc_environment.nz;
-  dz=lc_environment.cell_length/(nz-1);
+  lz=lc_environment.cell_length;
+  dz=lz/(nz-1);
   lc_environment.dz=dz;
   time=lc_environment.ti;
   
@@ -147,7 +148,7 @@ int main (int argc, char * argv[]) {
   fprintf(time_file,"#time   sigma_b   sigma_t\n");
   fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
   
-  print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+  print_snapshot_to_file(rho,time,lz,dz,nz,output_file_name,snapshot_number);
   printf("snapshot %d: %lf\n",snapshot_number,time);
   snapshot_number++;
 
@@ -165,7 +166,7 @@ int main (int argc, char * argv[]) {
 	};
 
       printf("snapshot %d: %lf\n",snapshot_number,time);
-      print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+      print_snapshot_to_file(rho,time,lz,dz,nz,output_file_name,snapshot_number);
       snapshot_number++;
 
       fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
@@ -173,7 +174,7 @@ int main (int argc, char * argv[]) {
 	
     };
   
-
+  fprintf(time_file,"\n");
   gsl_odeiv2_driver_free (pde_driver);
   free(rho);
   fclose(time_file);
@@ -188,14 +189,15 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 { 
   struct lc_cell mu = *(struct lc_cell *)params;
   int nz=mu.nz;
+  double lz=mu.cell_length;
   double dz = mu.cell_length/(nz-1);
   double k= mu.k;
   double alpha=mu.alpha;
   double D_c=mu.D_c;
-  double surf_viscosity[2];
   double tau[2], kappa[2];
-  double drho, d2rho;
-
+  double drho, d2rho, dsigma;
+  double GhostRho;
+  double z_position;
   
   tau[0]=mu.tau[0];
   tau[1]=mu.tau[1];
@@ -205,23 +207,49 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   kappa[1]=mu.kappa[1];
   
   
+    /*bottom boundary equations */
 
-  /*Bulk equations */  
-  for(int ii=1; ii<=nz; ii++)
+  z_position=-lz/2;
+  dsigma=kappa[0]*rho[1]-rho[0]/tau[0];
+  
+  //Extrapolate ghost point:
+  GhostRho=rho[2]-2*dz*dsigma/D_c*(1.0+alpha*cos(k*z_position));
+  
+
+  drho=(rho[2]-GhostRho)/(2*dz);
+  d2rho=(rho[2]+GhostRho-2.0*rho[1])/(dz*dz);
+  
+  Rhs[0]=dsigma;
+  Rhs[1]=D_c*(1.0+alpha*cos(z_position))*d2rho-D_c*alpha*k*sin(k*z_position)*drho;
+
+
+  /*Bulk equations */
+  
+  for(int ii=2; ii<nz+1; ii++)
     {
 
+      z_position=-lz/2.+k*dz*(ii-1);
       d2rho=(rho[ii+1]+rho[ii-1]-2.0*rho[ii])/(dz*dz);
       drho=(rho[ii+1]-rho[ii-1])/(2*dz);
 
-      Rhs[ii]= D_c*d2rho;
+      Rhs[ii]= D_c*(1.0+alpha*cos(z_position))*d2rho-D_c*alpha*k*sin(k*z_position)*drho;
           
 
     };
 
-  Rhs[0]=0;
+  
+  /* Top boundary equations*/
 
-
-  Rhs[nz+1]=0;
+  dsigma=kappa[1]*rho[nz]-rho[nz+1]/tau[1];
+  GhostRho=rho[nz-1]-2*dz*dsigma/D_c*(1.0+alpha);
+    
+  
+    drho=(GhostRho-rho[nz-1])/(2*dz);
+    d2rho=(GhostRho+rho[nz-1]-2.0*rho[nz])/(dz*dz);
+  
+  Rhs[nz]=D_c*(1.0+alpha*cos(k*lz/2))*d2rho-D_c*alpha*k*sin(k*lz/2)*drho;
+          
+  Rhs[nz+1]=dsigma;
 
       
 
@@ -243,43 +271,43 @@ struct lc_cell mu = *(struct lc_cell *)params;
   double drho, d2rho;
   gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+2, nz+2);
   
-  tau[0]=mu.tau[0];
-  tau[1]=mu.tau[1];
-  
-  
-  kappa[0]=mu.kappa[0];
-  kappa[1]=mu.kappa[1];
-  
-
-
-
-  
-  
-
-  gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
-  
-  for(int ii=0; ii<nz+2;ii++)
-    {
-
-      dRhsdt[ii]=0;
-      
-    };
-  
-  
-  for(int i=1;i<nz+2;i++){
-
-    gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i-1,k/(dz*dz) );
-    gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i  ,-2.0*k/(dz*dz));
-    gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i+1,k/(dz*dz) );
-
-  };
-
-
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
-
-  gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
-  gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-1,(-(k/dz) ));
+  //tau[0]=mu.tau[0];
+  //tau[1]=mu.tau[1];
+  //
+  //
+  //kappa[0]=mu.kappa[0];
+  //kappa[1]=mu.kappa[1];
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
+  //
+  //for(int ii=0; ii<nz+2;ii++)
+  //  {
+  //
+  //    dRhsdt[ii]=0;
+  //    
+  //  };
+  //
+  //
+  //for(int i=1;i<nz+2;i++){
+  //
+  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i-1,k/(dz*dz) );
+  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i  ,-2.0*k/(dz*dz));
+  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i+1,k/(dz*dz) );
+  //
+  //};
+  //
+  //
+  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
+  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
+  //
+  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
+  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-1,(-(k/dz) ));
     
   return GSL_SUCCESS;
   
@@ -288,6 +316,7 @@ struct lc_cell mu = *(struct lc_cell *)params;
 
 int print_snapshot_to_file(const double * rho,
 			   const double time,
+                           const double lz,
 			   const double dz,
 			   const int nz,
                            const char * output_file_prefix,
@@ -304,14 +333,14 @@ int print_snapshot_to_file(const double * rho,
   fprintf(snapshot_file,"#z  rho(z)\n");
 
   
-  for(int ii=1; ii<nz+2;ii++)
+  for(int ii=1; ii<nz+1;ii++)
     {
 	  
-      fprintf(snapshot_file,"%f  %f\n",(ii-1)*dz,rho[ii]);
+      fprintf(snapshot_file,"%f  %f\n",(ii-1)*dz-lz/2,rho[ii]);
       
 
     };
-  fprintf(snapshot_file,"\n\n");
+  fprintf(snapshot_file,"\n");
   
   fclose(snapshot_file);
 };
