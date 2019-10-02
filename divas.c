@@ -50,6 +50,10 @@ int main (int argc, char * argv[]) {
   lc_environment.dt=0.2;
 
   lc_environment.rho0=1;
+  lc_environment.sigma0[0]=0;
+  lc_environment.sigma0[1]=0;
+  
+
   
   //Read the parameter values form the input file:
   parse_input_file(  & lc_environment,  & tf, & timeprint , & dt );

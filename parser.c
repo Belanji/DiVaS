@@ -22,7 +22,6 @@ void error_check(int error_handler,
 
 
 void parse_input_file(struct lc_cell  * lc,
-		      struct optical_setup  * opt,
 		      double * tf,
 		      double * timeprint,
 		      double * dt )
@@ -147,6 +146,40 @@ void parse_input_file(struct lc_cell  * lc,
 	{
 
 	  error_handler=scanf("%lf",&(lc->kappa[1]));
+
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+	  
+	  fgets(garbage,400,stdin);
+
+
+	}
+            else if ( strcasecmp(parser,"sigma0_b") == 0 )
+	{
+
+	  error_handler=scanf("%lf",&(lc->sigma0[0]));
+
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+	  
+	  fgets(garbage,400,stdin);
+
+
+	}
+      else if ( strcasecmp(parser,"sigma0_t") == 0 )
+	{
+
+	  error_handler=scanf("%lf",&(lc->sigma0[1]));
 
 	  if (error_handler <= 0 )
 	    {
