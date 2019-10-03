@@ -1,10 +1,10 @@
-nz         200
-cell_length 5e-6
+nz          100
+cell_length 2e-6
 rho0       1
 
-k         5e6
+k         7.e6
 alpha     0.20
-D_C       1e-8
+D_C       1e-9
 
 sigma0_b  0.0
 tau_b     1e-2
@@ -18,7 +18,7 @@ kappa_t   1e-6
 ti          0.0
 tf          0.2
 timeprint   0.005
-dt          1e-3
+dt          1e-2
 
 
 #initial_conditions  read_from_file

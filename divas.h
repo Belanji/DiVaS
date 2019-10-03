@@ -6,8 +6,7 @@
 struct lc_cell
 {
 
-  double k, alpha, D_c;
-  double rho0;
+  double k, alpha;
   double tau[2], kappa[2], sigma0[2];
   double ti, tf, dt;
   double cell_length;

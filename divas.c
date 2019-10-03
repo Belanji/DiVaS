@@ -8,8 +8,9 @@
 #include <complex.h>
 #include "divas.h"
 #include "parser.h"
-const static double pi=3.141592653589793;
 
+const static double pi=3.141592653589793;
+const lz=2;
 
 
 int main (int argc, char * argv[]) {
@@ -17,7 +18,7 @@ int main (int argc, char * argv[]) {
   double  * rho;
   struct lc_cell lc_environment;
   double  tf=50.0;
-  double time, dz,  lz, dt=1e-3;
+  double time, dz,  dt=1e-3;
   double timeprint=0.2;
   FILE * time_file, * snapshot_file;
   const char * initial_conditions="standard";
@@ -61,7 +62,6 @@ int main (int argc, char * argv[]) {
 
 
   nz=lc_environment.nz;
-  lz=lc_environment.cell_length;
   dz=lz/(nz-1);
   lc_environment.dz=dz;
   time=lc_environment.ti;
@@ -196,7 +196,6 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 { 
   struct lc_cell mu = *(struct lc_cell *)params;
   int nz=mu.nz;
-  double lz=mu.cell_length;
   double dz = mu.cell_length/(nz-1);
   double k= mu.k;
   double alpha=mu.alpha;
