@@ -1,23 +1,23 @@
 nz         200
-cell_length 17.
-rho0       2
+cell_length 5e-6
+rho0       1
 
-K         1.10
+k         5e6
 alpha     0.20
-D_C       1.40
+D_C       1e-8
 
-sigma0_b  1.0
-tau_b     2.0
-kappa_b   3.0
+sigma0_b  0.0
+tau_b     1e-2
+kappa_b   1e-6
 
-sigma0_t  0.1
-tau_t     0.2
-kappa_t   0.3
+sigma0_t  0.0 
+tau_t     1e-2
+kappa_t   1e-6
 
 
 ti          0.0
-tf          0.4
-timeprint   0.2
+tf          0.2
+timeprint   0.005
 dt          1e-3
 
 

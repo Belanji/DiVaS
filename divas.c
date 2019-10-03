@@ -26,7 +26,8 @@ int main (int argc, char * argv[]) {
   int timesteper_kind_flag=0;
   int nz;
   int  snapshot_number=0;
-
+  double total_particles;
+  
   //Standard values:
   strcpy(lc_environment.initial_conditions,initial_conditions);
   strcpy(lc_environment.output_file_name,output_file_name);
@@ -143,10 +144,14 @@ int main (int argc, char * argv[]) {
     };
 
   printf("\n\nStarting calculations\n\n");
+
+
+  total_particles=calculate_total_particle_quantity ( rho,
+						      & lc_environment);
   
   time_file=fopen(time_file_name,"w");
-  fprintf(time_file,"#time   sigma_b   sigma_t\n");
-  fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
+  fprintf(time_file,"#time   sigma_b   sigma_t total_particles\n");
+  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+1],total_particles);
   
   print_snapshot_to_file(rho,time,lz,dz,nz,output_file_name,snapshot_number);
   printf("snapshot %d: %lf\n",snapshot_number,time);
@@ -169,8 +174,10 @@ int main (int argc, char * argv[]) {
       print_snapshot_to_file(rho,time,lz,dz,nz,output_file_name,snapshot_number);
       snapshot_number++;
 
-      fprintf(time_file,"%f  %f  %f \n",time, rho[0],rho[nz+1]);
-      
+      total_particles=calculate_total_particle_quantity ( rho,
+						      & lc_environment);
+      fprintf(time_file,"%e  %e  %e  %e \n",time, rho[0],rho[nz+1], total_particles);
+      fflush(time_file);
 	
     };
   
@@ -336,7 +343,7 @@ int print_snapshot_to_file(const double * rho,
   for(int ii=1; ii<nz+1;ii++)
     {
 	  
-      fprintf(snapshot_file,"%f  %f\n",(ii-1)*dz-lz/2,rho[ii]);
+      fprintf(snapshot_file,"%e  %e\n",(ii-1)*dz-lz/2,rho[ii]);
       
 
     };
@@ -373,4 +380,26 @@ void print_log_file(const struct lc_cell lc,
 
 
 
- 
+double calculate_total_particle_quantity ( const double rho[],
+					   const void  * params)
+{
+  struct lc_cell mu = *(struct lc_cell *)params;
+  const int nz=mu.nz;
+  const double lz=mu.cell_length;
+  const double dz = mu.cell_length/(nz-1);
+  double total_particle_quantity;
+
+
+  total_particle_quantity=rho[0]+rho[nz+1];
+
+  total_particle_quantity+=rho[1]*dz/2.;
+  for(int ii=2; ii<nz;ii++)
+    {
+
+      total_particle_quantity+=dz*rho[ii];
+
+    }
+  total_particle_quantity+=rho[nz]*dz/2.;
+  
+  return total_particle_quantity;
+}

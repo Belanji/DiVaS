@@ -25,6 +25,10 @@ int RhsFunction (double t,
 		  double Rhs[],
 		  void  * params);
 
+double calculate_total_particle_quantity ( const double rho[],
+					   const void  *params);
+
+
 int jacobian(double t,
 	     const double rho[],
 	     double * dRhsdrho,
