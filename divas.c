@@ -61,102 +61,102 @@ int main (int argc, char * argv[]) {
   print_log_file( lc_environment, tf, dt, "log.file");
 
 
-//  nz=lc_environment.nz;
-//  dz=lz/(nz-1);
-//  lc_environment.dz=dz;
-//  time=lc_environment.ti;
-//  
-//  //Starting the PDE solver:
-//  gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+2, &lc_environment};
-//
-//
-//  //Choose the integrator:
-//  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
-//  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
-//
-//
-//  gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
-//  rho= (double *) malloc( (nz+2)*sizeof(double) );
-//
-//
-//  if ( strcmp(lc_environment.initial_conditions,"standard") == 0 )
-//    {
-//
-//
-//      rho[0]=lc_environment.sigma0[0];
-//      for (int ii=1; ii<nz+1;ii++)
-//	{
-//
-//	  rho[ii]=lc_environment.rho0;
-//	  
-//	}
-//      rho[nz+1]=lc_environment.sigma0[1];
-//    }
-//  else if ( strcmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
-//    {
-//
-//
-//
-//      int i,j,k,ii,jj,kk;
-//      double trash_double;	
-//      FILE * ic_file;
-//      char string_placeholder[400];
-//      int read_status;
-//      int reading_line=1;
-//  
-//      ic_file=fopen(lc_environment.ic_file_name,"r");
-//      if (ic_file== NULL)
-//	{
-//	  printf("Unable to find the file \"%s\".\nPlease check your initial condition file name.\n\nAborting the program.\n\n",lc_environment.ic_file_name);
-//	  exit(0);
-//	}
-//
-//      //get the file header:
-//  
-//      printf("\nReading initial conditions from \"%s\".\n",lc_environment.ic_file_name);
-//  
-//      //removing the header:
-//      fgets(string_placeholder,400,ic_file);
-//      reading_line++;
-//
-//
-//      //Let's work:
-//
-//      for(k= 0; k< nz; k++)
-//	{
-//	  fgets(string_placeholder,400,ic_file);
-//	  read_status=sscanf(string_placeholder,"%lf %lf\n",&trash_double,&rho[k]);
-//	  //read_check(read_status,reading_line);
-//
-//
-//      	      
-//	  reading_line++;
-//	}
-//      
-//  
-//    }
-//  else 
-//    {
-//
-//      printf("No initial condition named %s is defined.\nAborting the program.\n\n",lc_environment);
-//      exit(0);
-//  
-//    };
-//
-//  printf("\n\nStarting calculations\n\n");
-//
-//
-//  total_particles=calculate_total_particle_quantity ( rho,
-//						      & lc_environment);
-//  
-//  time_file=fopen(time_file_name,"w");
-//  fprintf(time_file,"#time   sigma_b   sigma_t total_particles\n");
-//  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+1],total_particles);
-//  
-//  print_snapshot_to_file(rho,time,lz,dz,nz,output_file_name,snapshot_number);
-//  printf("snapshot %d: %lf\n",snapshot_number,time);
-//  snapshot_number++;
-//
+  nz=lc_environment.nz;
+  dz=lz/(nz-1);
+  lc_environment.dz=dz;
+  time=lc_environment.ti;
+  
+  //Starting the PDE solver:
+  //gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+2, &lc_environment};
+
+
+  //Choose the integrator:
+  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
+  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
+
+
+  //gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
+  rho= (double *) malloc( (nz+2)*sizeof(double) );
+
+
+  if ( strcmp(lc_environment.initial_conditions,"standard") == 0 )
+    {
+
+
+      rho[0]=lc_environment.sigma0[0];
+      for (int ii=1; ii<nz+1;ii++)
+	{
+
+	  rho[ii]=lc_environment.rho0;
+	  
+	}
+      rho[nz+1]=lc_environment.sigma0[1];
+    }
+  else if ( strcmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
+    {
+
+
+
+      int i,j,k,ii,jj,kk;
+      double trash_double;	
+      FILE * ic_file;
+      char string_placeholder[400];
+      int read_status;
+      int reading_line=1;
+  
+      ic_file=fopen(lc_environment.ic_file_name,"r");
+      if (ic_file== NULL)
+	{
+	  printf("Unable to find the file \"%s\".\nPlease check your initial condition file name.\n\nAborting the program.\n\n",lc_environment.ic_file_name);
+	  exit(0);
+	}
+
+      //get the file header:
+  
+      printf("\nReading initial conditions from \"%s\".\n",lc_environment.ic_file_name);
+  
+      //removing the header:
+      fgets(string_placeholder,400,ic_file);
+      reading_line++;
+
+
+      //Let's work:
+
+      for(k= 0; k< nz; k++)
+	{
+	  fgets(string_placeholder,400,ic_file);
+	  read_status=sscanf(string_placeholder,"%lf %lf\n",&trash_double,&rho[k]);
+	  //read_check(read_status,reading_line);
+
+
+      	      
+	  reading_line++;
+	}
+      
+  
+    }
+  else 
+    {
+
+      printf("No initial condition named %s is defined.\nAborting the program.\n\n",lc_environment);
+      exit(0);
+  
+    };
+
+  printf("\n\nStarting calculations\n\n");
+
+
+  total_particles=calculate_total_particle_quantity ( rho,
+						      & lc_environment);
+  
+  time_file=fopen(time_file_name,"w");
+  fprintf(time_file,"#time   sigma_b   sigma_t total_particles\n");
+  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+1],total_particles);
+  
+  print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+  printf("snapshot %d: %lf\n",snapshot_number,time);
+  snapshot_number++;
+
 //  while(time <tf)
 //    {
 //
@@ -320,39 +320,38 @@ int main (int argc, char * argv[]) {
 //};
 //
 //
-//int print_snapshot_to_file(const double * rho,
-//			   const double time,
-//                           const double lz,
-//			   const double dz,
-//			   const int nz,
-//                           const char * output_file_prefix,
-//			   int  snapshot_number)
-//{
-//
-//  FILE * snapshot_file;
-//  char output_file_name[200];
-//
-//  
-//  sprintf(output_file_name,"%s_%d.dat",output_file_prefix,snapshot_number);
-//
-//  snapshot_file=fopen(output_file_name,"w");
-//  fprintf(snapshot_file,"#z  rho(z)\n");
-//
-//  
-//  for(int ii=1; ii<nz+1;ii++)
-//    {
-//	  
-//      fprintf(snapshot_file,"%e  %e\n",(ii-1)*dz-lz/2,rho[ii]);
-//      
-//
-//    };
-//  fprintf(snapshot_file,"\n");
-//  
-//  fclose(snapshot_file);
-//};
-//
-//
-//
+int print_snapshot_to_file(const double * rho,
+			   const double time,
+			   const double dz,
+			   const int nz,
+                           const char * output_file_prefix,
+			   int  snapshot_number)
+{
+
+  FILE * snapshot_file;
+  char output_file_name[200];
+
+  
+  sprintf(output_file_name,"%s_%d.dat",output_file_prefix,snapshot_number);
+
+  snapshot_file=fopen(output_file_name,"w");
+  fprintf(snapshot_file,"#z  rho(z)\n");
+
+  
+  for(int ii=1; ii<nz+1;ii++)
+    {
+	  
+      fprintf(snapshot_file,"%e  %e\n",(ii-1)*dz-lz/2,rho[ii]);
+      
+
+    };
+  fprintf(snapshot_file,"\n");
+  
+  fclose(snapshot_file);
+};
+
+
+
 void print_log_file(const struct lc_cell lc,
 		    const double  tf,
 		    const double  dt,
@@ -381,26 +380,25 @@ void print_log_file(const struct lc_cell lc,
 //
 //
 //
-//double calculate_total_particle_quantity ( const double rho[],
-//					   const void  * params)
-//{
-//  struct lc_cell mu = *(struct lc_cell *)params;
-//  const int nz=mu.nz;
-//  const double lz=mu.cell_length;
-//  const double dz = mu.cell_length/(nz-1);
-//  double total_particle_quantity;
-//
-//
-//  total_particle_quantity=rho[0]+rho[nz+1];
-//
-//  total_particle_quantity+=rho[1]*dz/2.;
-//  for(int ii=2; ii<nz;ii++)
-//    {
-//
-//      total_particle_quantity+=dz*rho[ii];
-//
-//    }
-//  total_particle_quantity+=rho[nz]*dz/2.;
-//  
-//  return total_particle_quantity;
-//}
+double calculate_total_particle_quantity ( const double rho[],
+					   const void  * params)
+{
+  struct lc_cell mu = *(struct lc_cell *)params;
+  const int nz=mu.nz;
+  const double dz = lz/(nz-1);
+  double total_particle_quantity;
+
+
+  total_particle_quantity=rho[0]+rho[nz+1];
+
+  total_particle_quantity+=rho[1]*dz/2.;
+  for(int ii=2; ii<nz;ii++)
+    {
+
+      total_particle_quantity+=dz*rho[ii];
+
+    }
+  total_particle_quantity+=rho[nz]*dz/2.;
+  
+  return total_particle_quantity;
+}
