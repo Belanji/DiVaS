@@ -197,7 +197,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   struct lc_cell mu = *(struct lc_cell *)params;
   int nz=mu.nz;
   double dz = lz/(nz-1);
-  double k= mu.k;
+  double k=pi*mu.k;
   double alpha=mu.alpha;
   const double tau=mu.tau;
   double tau_d[2], tau_k[2];
@@ -356,7 +356,8 @@ void print_log_file(const struct lc_cell lc,
   printf("\n\nParameters values used:\n\n");
 
   printf( "Number of Layers(Nz):       %d  \n", lc.nz);
-  printf( "K, alpha:  %lf  %lf \n",lc.k,lc.alpha);
+  printf( " k(in Pi units):  %lf \n",lc.k);
+  printf( " alpha:  %lf \n",lc.alpha);
   printf( "tau:  %e  \n",lc.tau);
 
   

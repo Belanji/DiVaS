@@ -1,20 +1,20 @@
 nz         500
 
-k         6.28
-alpha     0.10
+k         2.
+alpha     0.50
 
-tau       1e-2
+tau       1e-1
 
 
-tau_d   1e-2
+tau_d   4e-2
 tau_k   1e-2
 sigma0  0.0
 
 
 ti          0.0
-tf          1.0
+tf          0.5
 timeprint   0.05
-dt          1e-2
+dt          1e-4
 
 
 #initial_conditions  read_from_file
