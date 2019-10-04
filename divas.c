@@ -212,9 +212,8 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   tau_k[0]=mu.tau_k[0];
   tau_k[1]=mu.tau_k[1];
   
-  
-  
-//    /*bottom boundary equations */
+
+  /*bottom boundary equations */
 
   z_position=-lz/2;
   dsigma=0.25*tau_d[0]*(rho[1]/tau_k[0]-rho[0]/tau);
@@ -239,7 +238,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
       d2rho=(rho[ii+1]+rho[ii-1]-2.0*rho[ii])/(dz*dz);
       drho=(rho[ii+1]-rho[ii-1])/(2*dz);
 
-      Rhs[ii]= (1.0+alpha*cos(z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+      Rhs[ii]=(1.0+alpha*cos(z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
           
 
     };
@@ -249,7 +248,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 
   
   dsigma=0.25*tau_d[1]*(rho[nz]/tau_k[1]-rho[nz+1]/tau);
-  GhostRho=rho[nz-1]-2*dz*dsigma/(1.0+alpha);
+  GhostRho=rho[nz-1]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
     
   
   drho=(GhostRho-rho[nz-1])/(2*dz);
