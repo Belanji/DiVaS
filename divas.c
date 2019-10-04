@@ -67,11 +67,11 @@ int main (int argc, char * argv[]) {
   time=lc_environment.ti;
   
   //Starting the PDE solver:
-  //gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+2, &lc_environment};
+  gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+2, &lc_environment};
 
 
   //Choose the integrator:
-  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
+  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
   //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
 
 
@@ -157,169 +157,165 @@ int main (int argc, char * argv[]) {
   printf("snapshot %d: %lf\n",snapshot_number,time);
   snapshot_number++;
 
-//  while(time <tf)
-//    {
-//
-//      int status = gsl_odeiv2_driver_apply (pde_driver, &time, time+timeprint, rho);      
-//
-//
-//      if (status != GSL_SUCCESS)
-//	{
-//
-//	  printf ("error, return value=%d\n", status);
-//   
-//	};
-//
-//      printf("snapshot %d: %lf\n",snapshot_number,time);
-//      print_snapshot_to_file(rho,time,lz,dz,nz,output_file_name,snapshot_number);
-//      snapshot_number++;
-//
-//      total_particles=calculate_total_particle_quantity ( rho,
-//						      & lc_environment);
-//      fprintf(time_file,"%e  %e  %e  %e \n",time, rho[0],rho[nz+1], total_particles);
-//      fflush(time_file);
-//	
-//    };
-//  
-//  fprintf(time_file,"\n");
-//  gsl_odeiv2_driver_free (pde_driver);
-//  free(rho);
-//  fclose(time_file);
-//  return 0;
-//
+  while(time <tf)
+    {
+
+      int status = gsl_odeiv2_driver_apply (pde_driver, &time, time+timeprint, rho);      
+
+
+      if (status != GSL_SUCCESS)
+	{
+
+	  printf ("error, return value=%d\n", status);
+   
+	};
+
+      printf("snapshot %d: %lf\n",snapshot_number,time);
+      print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+      snapshot_number++;
+
+      total_particles=calculate_total_particle_quantity ( rho,
+						      & lc_environment);
+      fprintf(time_file,"%e  %e  %e  %e \n",time, rho[0],rho[nz+1], total_particles);
+      fflush(time_file);
+	
+    };
+  
+  fprintf(time_file,"\n");
+  gsl_odeiv2_driver_free (pde_driver);
+  free(rho);
+  fclose(time_file);
+  return 0;
+
 
 };
      
 
     
-//int RhsFunction (double t, const double rho[], double Rhs[], void * params)
-//{ 
-//  struct lc_cell mu = *(struct lc_cell *)params;
-//  int nz=mu.nz;
-//  double dz = lz/(nz-1);
-//  double k= mu.k;
-//  double alpha=mu.alpha;
-//  double D_c=mu.D_c;
-//  double tau[2], kappa[2];
-//  double drho, d2rho, dsigma;
-//  double GhostRho;
-//  double z_position;
-//  
-//  tau[0]=mu.tau[0];
-//  tau[1]=mu.tau[1];
-//  
-//  
-//  kappa[0]=mu.kappa[0];
-//  kappa[1]=mu.kappa[1];
-//  
-//  
+int RhsFunction (double t, const double rho[], double Rhs[], void * params)
+{ 
+  struct lc_cell mu = *(struct lc_cell *)params;
+  int nz=mu.nz;
+  double dz = lz/(nz-1);
+  double k= mu.k;
+  double alpha=mu.alpha;
+  const double tau=mu.tau;
+  double tau_d[2], tau_k[2];
+  double drho, d2rho, dsigma;
+  double GhostRho;
+  double z_position;
+  
+  tau_d[0]=mu.tau_d[0];
+  tau_d[1]=mu.tau_d[1];
+  
+  
+  tau_k[0]=mu.tau_k[0];
+  tau_k[1]=mu.tau_k[1];
+  
+  
+  
 //    /*bottom boundary equations */
-//
-//  z_position=-lz/2;
-//  dsigma=kappa[0]*rho[1]-rho[0]/tau[0];
+
+  z_position=-lz/2;
+  dsigma=0.25*tau_d[0]*(rho[1]/tau_k[0]-rho[0]/tau);
+  
+  //Extrapolate ghost point:
+  GhostRho=rho[2]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
+  
+
+  drho=(rho[2]-GhostRho)/(2*dz);
+  d2rho=(rho[2]+GhostRho-2.0*rho[1])/(dz*dz);
 //  
-//  //Extrapolate ghost point:
-//  GhostRho=rho[2]-2*dz*dsigma/D_c*(1.0+alpha*cos(k*z_position));
-//  
-//
-//  drho=(rho[2]-GhostRho)/(2*dz);
-//  d2rho=(rho[2]+GhostRho-2.0*rho[1])/(dz*dz);
-//  
-//  Rhs[0]=dsigma;
-//  Rhs[1]=D_c*(1.0+alpha*cos(z_position))*d2rho-D_c*alpha*k*sin(k*z_position)*drho;
-//
-//
-//  /*Bulk equations */
-//  
-//  for(int ii=2; ii<nz+1; ii++)
-//    {
-//
-//      z_position=-lz/2.+k*dz*(ii-1);
-//      d2rho=(rho[ii+1]+rho[ii-1]-2.0*rho[ii])/(dz*dz);
-//      drho=(rho[ii+1]-rho[ii-1])/(2*dz);
-//
-//      Rhs[ii]= D_c*(1.0+alpha*cos(z_position))*d2rho-D_c*alpha*k*sin(k*z_position)*drho;
-//          
-//
-//    };
-//
-//  
-//  /* Top boundary equations*/
-//
-//  dsigma=kappa[1]*rho[nz]-rho[nz+1]/tau[1];
-//  GhostRho=rho[nz-1]-2*dz*dsigma/D_c*(1.0+alpha);
-//    
-//  
-//    drho=(GhostRho-rho[nz-1])/(2*dz);
-//    d2rho=(GhostRho+rho[nz-1]-2.0*rho[nz])/(dz*dz);
-//  
-//  Rhs[nz]=D_c*(1.0+alpha*cos(k*lz/2))*d2rho-D_c*alpha*k*sin(k*lz/2)*drho;
-//          
-//  Rhs[nz+1]=dsigma;
-//
-//      
-//
-//      return GSL_SUCCESS;
-//
-//    };
-//
-//
-//int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], void * params)
-//{
-//struct lc_cell mu = *(struct lc_cell *)params;
-//  int nz=mu.nz;
-//  double dz = mu.cell_length/(nz-1);
-//  double k= mu.k;
-//  double alpha=mu.alpha;
-//  double D_c=mu.D_c;
-//  double surf_viscosity[2];
-//  double tau[2], kappa[2];
-//  double drho, d2rho;
-//  gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+2, nz+2);
-//  
-//  //tau[0]=mu.tau[0];
-//  //tau[1]=mu.tau[1];
-//  //
-//  //
-//  //kappa[0]=mu.kappa[0];
-//  //kappa[1]=mu.kappa[1];
-//  //
-//  //
-//  //
-//  //
-//  //
-//  //
-//  //
-//  //gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
-//  //
-//  //for(int ii=0; ii<nz+2;ii++)
-//  //  {
-//  //
-//  //    dRhsdt[ii]=0;
-//  //    
-//  //  };
-//  //
-//  //
-//  //for(int i=1;i<nz+2;i++){
-//  //
-//  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i-1,k/(dz*dz) );
-//  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i  ,-2.0*k/(dz*dz));
-//  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i+1,k/(dz*dz) );
-//  //
-//  //};
-//  //
-//  //
-//  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
-//  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
-//  //
-//  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
-//  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-1,(-(k/dz) ));
-//    
-//  return GSL_SUCCESS;
-//  
-//};
-//
-//
+  Rhs[0]=dsigma;
+  Rhs[1]=(1.0+alpha*cos(z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+
+
+  /*Bulk equations */
+  
+  for(int ii=2; ii<nz+1; ii++)
+    {
+
+      z_position=-lz/2.+k*dz*(ii-1);
+      d2rho=(rho[ii+1]+rho[ii-1]-2.0*rho[ii])/(dz*dz);
+      drho=(rho[ii+1]-rho[ii-1])/(2*dz);
+
+      Rhs[ii]= (1.0+alpha*cos(z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+          
+
+    };
+
+  
+  /* Top boundary equations*/
+
+  
+  dsigma=0.25*tau_d[1]*(rho[nz]/tau_k[1]-rho[nz+1]/tau);
+  GhostRho=rho[nz-1]-2*dz*dsigma/(1.0+alpha);
+    
+  
+  drho=(GhostRho-rho[nz-1])/(2*dz);
+  d2rho=(GhostRho+rho[nz-1]-2.0*rho[nz])/(dz*dz);
+  
+  Rhs[nz]=(1.0+alpha*cos(k*lz/2))*d2rho-alpha*k*sin(k*lz/2)*drho;
+  Rhs[nz+1]=dsigma;
+
+  return GSL_SUCCESS;
+      
+    };
+
+
+int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], void * params)
+{
+struct lc_cell mu = *(struct lc_cell *)params;
+  int nz=mu.nz;
+  double dz = lz/(nz-1);
+  double k= mu.k;
+  double alpha=mu.alpha;
+  double drho, d2rho;
+  gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+2, nz+2);
+  
+  //tau[0]=mu.tau[0];
+  //tau[1]=mu.tau[1];
+  //
+  //
+  //kappa[0]=mu.kappa[0];
+  //kappa[1]=mu.kappa[1];
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
+  //
+  //for(int ii=0; ii<nz+2;ii++)
+  //  {
+  //
+  //    dRhsdt[ii]=0;
+  //    
+  //  };
+  //
+  //
+  //for(int i=1;i<nz+2;i++){
+  //
+  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i-1,k/(dz*dz) );
+  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i  ,-2.0*k/(dz*dz));
+  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i+1,k/(dz*dz) );
+  //
+  //};
+  //
+  //
+  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
+  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
+  //
+  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
+  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-1,(-(k/dz) ));
+    
+  return GSL_SUCCESS;
+  
+};
+
+
 int print_snapshot_to_file(const double * rho,
 			   const double time,
 			   const double dz,

@@ -1,19 +1,19 @@
-nz          100
+nz         500
 
-k         3.14
-alpha     0.20
+k         6.28
+alpha     0.10
 
-tau       1e-9
+tau       1e-2
 
 
 tau_d   1e-2
-tau_k   1e-6
+tau_k   1e-2
 sigma0  0.0
 
 
 ti          0.0
-tf          0.2
-timeprint   0.005
+tf          1.0
+timeprint   0.05
 dt          1e-2
 
 
