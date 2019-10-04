@@ -226,7 +226,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   d2rho=(rho[2]+GhostRho-2.0*rho[1])/(dz*dz);
 //  
   Rhs[0]=dsigma;
-  Rhs[1]=(1.0+alpha*cos(z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+  Rhs[1]=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
 
 
   /*Bulk equations */
@@ -234,11 +234,11 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   for(int ii=2; ii<nz+1; ii++)
     {
 
-      z_position=-lz/2.+k*dz*(ii-1);
+      z_position=-lz/2.+dz*(ii-1);
       d2rho=(rho[ii+1]+rho[ii-1]-2.0*rho[ii])/(dz*dz);
       drho=(rho[ii+1]-rho[ii-1])/(2*dz);
 
-      Rhs[ii]=(1.0+alpha*cos(z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+      Rhs[ii]=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
           
 
     };
@@ -246,7 +246,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   
   /* Top boundary equations*/
 
-  
+  z_position=lz/2;
   dsigma=0.25*tau_d[1]*(rho[nz]/tau_k[1]-rho[nz+1]/tau);
   GhostRho=rho[nz-1]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
     
@@ -254,7 +254,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   drho=(GhostRho-rho[nz-1])/(2*dz);
   d2rho=(GhostRho+rho[nz-1]-2.0*rho[nz])/(dz*dz);
   
-  Rhs[nz]=(1.0+alpha*cos(k*lz/2))*d2rho-alpha*k*sin(k*lz/2)*drho;
+  Rhs[nz]=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
   Rhs[nz+1]=dsigma;
 
   return GSL_SUCCESS;
