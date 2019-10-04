@@ -6,10 +6,11 @@
 struct lc_cell
 {
 
-  double k, alpha;
-  double tau[2], kappa[2], sigma0[2];
+  double k, alpha, tau;
+  double tau_k[2], tau_d[2];
   double ti, tf, dt;
-  double cell_length;
+  double rho0;
+  double sigma0[2];
   double dz;
   int nz;
   char output_file_name[200];

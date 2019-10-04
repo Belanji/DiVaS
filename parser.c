@@ -74,11 +74,11 @@ void parse_input_file(struct lc_cell  * lc,
 	  
       
 	}
-      else if ( strcasecmp(parser,"D_c") == 0 )
+      else if ( strcasecmp(parser,"tau") == 0 )
 	{
 
-	  error_handler=scanf("%lf",&lc->D_c);
-
+	  error_handler=scanf("%lf",&(lc->tau));
+	  
 	  if (error_handler <= 0 )
 	    {
 
@@ -91,11 +91,12 @@ void parse_input_file(struct lc_cell  * lc,
 
 
 	}
-      else if ( strcasecmp(parser,"cell_length") == 0 || strcasecmp(parser,"cell_size") == 0 )
+      else if ( strcasecmp(parser,"tau_d") == 0 )
 	{
 
-	  error_handler=scanf("%lf",&lc->cell_length);
-
+	  error_handler=scanf("%lf",&(lc->tau_d[0]));
+	  lc->tau_d[1]=lc->tau_d[0];
+	  
 	  if (error_handler <= 0 )
 	    {
 
@@ -108,11 +109,12 @@ void parse_input_file(struct lc_cell  * lc,
 
 
 	}
-      else if ( strcasecmp(parser,"rho0") == 0 || strcasecmp(parser,"initial_density") == 0 )
+      else if ( strcasecmp(parser,"tau_k") == 0 )
 	{
 
-	  error_handler=scanf("%lf",&lc->rho0);
-
+	  error_handler=scanf("%lf",&(lc->tau_k[0]));
+	  lc->tau_k[1]=lc->tau_k[0];
+	  
 	  if (error_handler <= 0 )
 	    {
 
@@ -125,96 +127,12 @@ void parse_input_file(struct lc_cell  * lc,
 
 
 	}
-      else if ( strcasecmp(parser,"tau_b") == 0 )
-	{
-
-	  error_handler=scanf("%lf",&(lc->tau[0]));
-
-	  if (error_handler <= 0 )
-	    {
-
-	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
-	      printf("Please review your input file.\n Aborting the program\n");
-	      exit(0);
-	    };
-	  
-	  fgets(garbage,400,stdin);
-
-
-	}
-      else if ( strcasecmp(parser,"tau_t") == 0 )
-	{
-
-	  error_handler=scanf("%lf",&(lc->tau[1]));
-
-	  if (error_handler <= 0 )
-	    {
-
-	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
-	      printf("Please review your input file.\n Aborting the program\n");
-	      exit(0);
-	    };
-	  
-	  fgets(garbage,400,stdin);
-
-
-	}
-      else if ( strcasecmp(parser,"kappa_b") == 0 )
-	{
-
-	  error_handler=scanf("%lf",&(lc->kappa[0]));
-
-	  if (error_handler <= 0 )
-	    {
-
-	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
-	      printf("Please review your input file.\n Aborting the program\n");
-	      exit(0);
-	    };
-	  
-	  fgets(garbage,400,stdin);
-
-
-	}
-      else if ( strcasecmp(parser,"kappa_t") == 0 )
-	{
-
-	  error_handler=scanf("%lf",&(lc->kappa[1]));
-
-	  if (error_handler <= 0 )
-	    {
-
-	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
-	      printf("Please review your input file.\n Aborting the program\n");
-	      exit(0);
-	    };
-	  
-	  fgets(garbage,400,stdin);
-
-
-	}
-      else if ( strcasecmp(parser,"sigma0_b") == 0 )
+      else if ( strcasecmp(parser,"sigma0") == 0 )
 	{
 
 	  error_handler=scanf("%lf",&(lc->sigma0[0]));
-
-	  if (error_handler <= 0 )
-	    {
-
-	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
-	      printf("Please review your input file.\n Aborting the program\n");
-	      exit(0);
-	    };
+	  lc->sigma0[0]=lc->sigma0[1];
 	  
-	  fgets(garbage,400,stdin);
-
-
-	}
-      else if ( strcasecmp(parser,"sigma0_t") == 0 )
-	{
-
-	  error_handler=scanf("%lf",&(lc->sigma0[1]));
-
 	  if (error_handler <= 0 )
 	    {
 
