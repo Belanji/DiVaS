@@ -42,6 +42,10 @@ int main (int argc, char * argv[]) {
   lc_environment.tau_k[0]=1.0;
   lc_environment.tau_k[1]=1.0;
 
+  lc_environment.tau_a[0]=1.0;
+  lc_environment.tau_a[1]=1.0;
+
+  
   lc_environment.tau_d[0]=1.0;
   lc_environment.tau_d[1]=1.0;
 
@@ -61,13 +65,15 @@ int main (int argc, char * argv[]) {
   print_log_file( lc_environment, tf, dt, "log.file");
 
 
+  exit(0);
+  
   nz=lc_environment.nz;
   dz=lz/(nz-1);
   lc_environment.dz=dz;
   time=lc_environment.ti;
   
   //Starting the PDE solver:
-  gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+2, &lc_environment};
+  gsl_odeiv2_system sys = {RhsFunction, jacobian, nz+4, &lc_environment};
 
 
   //Choose the integrator:
@@ -75,22 +81,32 @@ int main (int argc, char * argv[]) {
   //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
 
 
-  //gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
-  rho= (double *) malloc( (nz+2)*sizeof(double) );
+  gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
 
+
+
+
+  rho= (double *) malloc( (nz+4)*sizeof(double) );
+  /*Important note: simga0 are placed at 
+   while dsigma_dt are placed at rho[1] and rho[nz+2].
+  The rho values are placed between 2 and nz+1.*/
+  
 
   if ( strcmp(lc_environment.initial_conditions,"standard") == 0 )
     {
 
 
       rho[0]=lc_environment.sigma0[0];
-      for (int ii=1; ii<nz+1;ii++)
+      rho[1]=lc_environment.sigma0[0];
+            
+      for (int ii=2; ii<nz+2;ii++)
 	{
 
 	  rho[ii]=lc_environment.rho0;
 	  
 	}
-      rho[nz+1]=lc_environment.sigma0[1];
+      rho[nz+2]=0;
+      rho[nz+3]=lc_environment.sigma0[1];
     }
   else if ( strcmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
     {
@@ -151,7 +167,7 @@ int main (int argc, char * argv[]) {
   
   time_file=fopen(time_file_name,"w");
   fprintf(time_file,"#time   sigma_b   sigma_t total_particles\n");
-  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+1],total_particles);
+  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+3],total_particles);
   
   print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
   printf("snapshot %d: %lf\n",snapshot_number,time);
@@ -176,7 +192,7 @@ int main (int argc, char * argv[]) {
 
       total_particles=calculate_total_particle_quantity ( rho,
 						      & lc_environment);
-      fprintf(time_file,"%e  %e  %e  %e \n",time, rho[0],rho[nz+1], total_particles);
+      fprintf(time_file,"%e  %e  %e  %e \n",time, rho[0],rho[nz+3], total_particles);
       fflush(time_file);
 	
     };
@@ -231,7 +247,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 
   /*Bulk equations */
   
-  for(int ii=2; ii<nz+1; ii++)
+  for(int ii=2; ii<nz+3; ii++)
     {
 
       z_position=-lz/2.+dz*(ii-1);
@@ -247,7 +263,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   /* Top boundary equations*/
 
   z_position=lz/2;
-  dsigma=0.25*tau_d[1]*(rho[nz]/tau_k[1]-rho[nz+1]/tau);
+  dsigma=0.25*tau_d[1]*(rho[nz]/tau_k[1]-rho[nz+3]/tau);
   GhostRho=rho[nz-1]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
     
   
@@ -255,7 +271,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   d2rho=(GhostRho+rho[nz-1]-2.0*rho[nz])/(dz*dz);
   
   Rhs[nz]=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
-  Rhs[nz+1]=dsigma;
+  Rhs[nz+3]=dsigma;
 
   return GSL_SUCCESS;
       
@@ -270,7 +286,7 @@ struct lc_cell mu = *(struct lc_cell *)params;
   double k= mu.k;
   double alpha=mu.alpha;
   double drho, d2rho;
-  gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+2, nz+2);
+  gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+4, nz+4);
   
   //tau[0]=mu.tau[0];
   //tau[1]=mu.tau[1];
@@ -287,7 +303,7 @@ struct lc_cell mu = *(struct lc_cell *)params;
   //
   //gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
   //
-  //for(int ii=0; ii<nz+2;ii++)
+  //for(int ii=0; ii<nz+4;ii++)
   //  {
   //
   //    dRhsdt[ii]=0;
@@ -295,7 +311,7 @@ struct lc_cell mu = *(struct lc_cell *)params;
   //  };
   //
   //
-  //for(int i=1;i<nz+2;i++){
+  //for(int i=1;i<nz+4;i++){
   //
   //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i-1,k/(dz*dz) );
   //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i  ,-2.0*k/(dz*dz));
@@ -333,7 +349,7 @@ int print_snapshot_to_file(const double * rho,
   fprintf(snapshot_file,"#z  rho(z)\n");
 
   
-  for(int ii=1; ii<nz+1;ii++)
+  for(int ii=1; ii<nz+3;ii++)
     {
 	  
       fprintf(snapshot_file,"%e  %e\n",(ii-1)*dz-lz/2,rho[ii]);
@@ -362,9 +378,11 @@ void print_log_file(const struct lc_cell lc,
 
   
   printf("\nBoundary conditions:\n\n");
-  
+
+  printf(  "tau_a:  %e  \n",lc.tau_a[0] );
   printf(  "tau_d:  %e  \n",lc.tau_d[0] );
   printf(  "tau_k:  %e  \n",lc.tau_k[0] );
+
 
 
 
@@ -385,7 +403,7 @@ double calculate_total_particle_quantity ( const double rho[],
   double total_particle_quantity;
 
 
-  total_particle_quantity=rho[0]+rho[nz+1];
+  total_particle_quantity=rho[0]+rho[nz+3];
 
   total_particle_quantity+=rho[1]*dz/2.;
   for(int ii=2; ii<nz;ii++)

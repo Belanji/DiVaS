@@ -5,7 +5,7 @@ alpha     0.50
 
 tau       1e-1
 
-
+tau_a   1e-3
 tau_d   4e-2
 tau_k   1e-2
 sigma0  0.0
