@@ -55,7 +55,7 @@ int main (int argc, char * argv[]) {
   
   lc_environment.ti=0.;
   lc_environment.tf=50.;
-  lc_environment.dt=0.2;
+  lc_environment.dt=2e-3;
   lc_environment.rho0=1;
   
 
@@ -172,7 +172,7 @@ int main (int argc, char * argv[]) {
   snapshot_number++;
 
 
-  exit(0);
+
   
   while(time <tf)
     {
@@ -217,8 +217,8 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   double k=pi*mu.k;
   double alpha=mu.alpha;
   const double tau=mu.tau;
-  double tau_d[2], tau_k[2];
-  double drho, d2rho, dsigma;
+  double tau_d[2], tau_k[2], tau_a[2];
+  double drho, d2rho, dsigma, drho_dt;
   double GhostRho;
   double z_position;
   
@@ -228,27 +228,36 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   
   tau_k[0]=mu.tau_k[0];
   tau_k[1]=mu.tau_k[1];
-  
+
+  tau_a[0]=mu.tau_a[0];
+  tau_a[1]=mu.tau_a[1];
+
 
   /*bottom boundary equations */
 
   z_position=-lz/2;
-  dsigma=0.25*tau_d[0]*(rho[1]/tau_k[0]-rho[0]/tau);
+  dsigma=rho[1];
+  
   
   //Extrapolate ghost point:
-  GhostRho=rho[2]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
+  GhostRho=rho[3]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
   
 
-  drho=(rho[2]-GhostRho)/(2*dz);
-  d2rho=(rho[2]+GhostRho-2.0*rho[1])/(dz*dz);
-//  
-  Rhs[0]=dsigma;
-  Rhs[1]=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+  drho=(rho[3]-GhostRho)/(2*dz);
+  d2rho=(rho[3]+GhostRho-2.0*rho[2])/(dz*dz);
+//
+  drho_dt=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
 
+  
+  Rhs[0]=dsigma;
+  Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])-4*dsigma/(tau_d[0]*tau_a[0])+rho[2]/(tau_a[0]*tau_k[0])
+				  -exp(-t*tau_d[0]/4)*rho[0]/(tau*tau_a[0]));
+
+  Rhs[2]=drho_dt;
 
   /*Bulk equations */
   
-  for(int ii=2; ii<nz+3; ii++)
+  for(int ii=3; ii<nz+1; ii++)
     {
 
       z_position=-lz/2.+dz*(ii-1);
@@ -264,14 +273,19 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   /* Top boundary equations*/
 
   z_position=lz/2;
-  dsigma=0.25*tau_d[1]*(rho[nz]/tau_k[1]-rho[nz+3]/tau);
-  GhostRho=rho[nz-1]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
+  dsigma=rho[nz+2];
+  GhostRho=rho[nz]-2*dz*dsigma/(1.0+alpha*cos(k*z_position));
     
   
-  drho=(GhostRho-rho[nz-1])/(2*dz);
-  d2rho=(GhostRho+rho[nz-1]-2.0*rho[nz])/(dz*dz);
+  drho=(GhostRho-rho[nz])/(2*dz);
+  d2rho=(GhostRho+rho[nz]-2.0*rho[nz+1])/(dz*dz);
+
+  drho_dt=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
   
-  Rhs[nz]=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+  Rhs[nz+1]=drho_dt;
+  Rhs[nz+2]=(tau_d[1]*tau_d[1]/16.)*(4*drho_dt/(tau_d[1]*tau_k[1])-4*dsigma/(tau_d[1]*tau_a[1])+rho[nz+1]/(tau_a[1]*tau_k[1])
+				  -exp(-t*tau_d[1]/4)*rho[nz+3]/(tau*tau_a[1]));
+  
   Rhs[nz+3]=dsigma;
 
   return GSL_SUCCESS;
