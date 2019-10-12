@@ -65,8 +65,6 @@ int main (int argc, char * argv[]) {
   print_log_file( lc_environment, tf, dt, "log.file");
 
 
-  exit(0);
-  
   nz=lc_environment.nz;
   dz=lz/(nz-1);
   lc_environment.dz=dz;
@@ -87,7 +85,7 @@ int main (int argc, char * argv[]) {
 
 
   rho= (double *) malloc( (nz+4)*sizeof(double) );
-  /*Important note: simga0 are placed at 
+  /*Important note: simga0 are placed at rho[0] and rho[nz+3]
    while dsigma_dt are placed at rho[1] and rho[nz+2].
   The rho values are placed between 2 and nz+1.*/
   
@@ -97,7 +95,7 @@ int main (int argc, char * argv[]) {
 
 
       rho[0]=lc_environment.sigma0[0];
-      rho[1]=lc_environment.sigma0[0];
+      rho[1]=0;
             
       for (int ii=2; ii<nz+2;ii++)
 	{
@@ -173,6 +171,9 @@ int main (int argc, char * argv[]) {
   printf("snapshot %d: %lf\n",snapshot_number,time);
   snapshot_number++;
 
+
+  exit(0);
+  
   while(time <tf)
     {
 
@@ -349,10 +350,10 @@ int print_snapshot_to_file(const double * rho,
   fprintf(snapshot_file,"#z  rho(z)\n");
 
   
-  for(int ii=1; ii<nz+3;ii++)
+  for(int ii=2; ii<nz+2;ii++)
     {
 	  
-      fprintf(snapshot_file,"%e  %e\n",(ii-1)*dz-lz/2,rho[ii]);
+      fprintf(snapshot_file,"%e  %e\n",(ii-2)*dz-lz/2,rho[ii]);
       
 
     };
@@ -405,14 +406,14 @@ double calculate_total_particle_quantity ( const double rho[],
 
   total_particle_quantity=rho[0]+rho[nz+3];
 
-  total_particle_quantity+=rho[1]*dz/2.;
-  for(int ii=2; ii<nz;ii++)
+  total_particle_quantity+=rho[2]*dz/2.;
+  for(int ii=3; ii<nz+1;ii++)
     {
 
       total_particle_quantity+=dz*rho[ii];
 
     }
-  total_particle_quantity+=rho[nz]*dz/2.;
+  total_particle_quantity+=rho[nz+1]*dz/2.;
   
   return total_particle_quantity;
 }
