@@ -1,0 +1,21 @@
+nz         500
+
+k         kk_placeholder
+alpha     alpha_placeholder
+tau       tau_placeholder
+
+
+tau_d   taud_placeholder
+tau_k   tauk_placeholder
+sigma0  0.
+
+
+ti          0.0
+tf          0.5
+timeprint   0.05
+dt          1e-4
+
+
+#initial_conditions  read_from_file
+#ic_file             ic_file.dat
+#output_file         output_file.dat

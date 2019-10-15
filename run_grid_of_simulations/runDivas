@@ -1,0 +1,96 @@
+#!/bin/bash 
+
+
+alphas=(0.1 0.2 0.4 0.6)
+taus_d=(0.01 0.1 1 10)
+taus_k=(0.01 0.1 1)
+taus=(0.01 0.1 5)
+ks=(0 4 8 12)
+#alpha/tauD/tauk/tau/k
+
+logFile="log.out.1"
+inputFile="data.input"
+
+baseDirr=$(pwd)
+divasDirr=${baseDirr} #Divas executable directory.
+for alpha in ${alphas[@]}
+do
+
+    if [ ! -d alpha=${alpha} ]
+    then
+
+        mkdir alpha=${alpha}
+
+    fi
+
+    for tau_d in ${taus_d[@]}
+    do
+        
+        if [ ! -d alpha=${alpha}/tau_d=${tau_d} ]
+        then
+
+            mkdir alpha=${alpha}/tau_d=${tau_d}
+
+        fi  
+
+        for tau_k in ${taus_k[@]}
+        do
+            
+            if [ ! -d alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k} ]
+            then
+
+                mkdir alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}
+
+            fi  
+
+
+            for tau in ${taus[@]}
+            do
+            
+                if [ ! -d alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau} ]
+                then
+
+                    mkdir alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau} 
+
+                fi
+
+
+                for kk in ${ks[@]}
+                do
+            
+                    if [ ! -d alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk} ]
+                    then
+
+                        
+                        mkdir alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk}
+
+                    fi
+
+
+                    cd ${baseDirr}/alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk}/
+
+
+
+                    sed -e "s/kk_placeholder/${kk}/" \
+                        -e "s/alpha_placeholder/${alpha}/" \
+                        -e "s/tau_placeholder/${tau}/" \
+                        -e "s/taud_placeholder/${tau_d}/" \
+                        -e "s/tauk_placeholder/${tau_k}/" \
+                        ${baseDirr}/${inputFile} >data.input
+
+                    
+                    ${divasDirr}/divas <data.input >${logFile}
+
+                    cd ${baseDirr}
+                    
+                done
+                
+            done
+            
+        done
+        
+    done
+
+done
+    
+
