@@ -251,7 +251,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   
   Rhs[0]=dsigma;
   Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])-4*dsigma/(tau_d[0]*tau_a[0])+rho[2]/(tau_a[0]*tau_k[0])
-				  -exp(-t*tau_d[0]/4)*rho[0]/(tau*tau_a[0]));
+				  -exp(-t*tau_d[0]/(tau_a[0]*4.))*rho[0]/(tau*tau_a[0]));
 
   Rhs[2]=drho_dt;
 
@@ -260,7 +260,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   for(int ii=3; ii<nz+1; ii++)
     {
 
-      z_position=-lz/2.+dz*(ii-1);
+      z_position=-lz/2.+dz*(ii-2);
       d2rho=(rho[ii+1]+rho[ii-1]-2.0*rho[ii])/(dz*dz);
       drho=(rho[ii+1]-rho[ii-1])/(2*dz);
 
@@ -284,7 +284,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   
   Rhs[nz+1]=drho_dt;
   Rhs[nz+2]=(tau_d[1]*tau_d[1]/16.)*(4*drho_dt/(tau_d[1]*tau_k[1])-4*dsigma/(tau_d[1]*tau_a[1])+rho[nz+1]/(tau_a[1]*tau_k[1])
-				  -exp(-t*tau_d[1]/4)*rho[nz+3]/(tau*tau_a[1]));
+				     -exp(-t*tau_d[1]/(4*tau_a[1]))*rho[nz+3]/(tau*tau_a[1]));
   
   Rhs[nz+3]=dsigma;
 
@@ -387,8 +387,8 @@ void print_log_file(const struct lc_cell lc,
   printf("\n\nParameters values used:\n\n");
 
   printf( "Number of Layers(Nz):       %d  \n", lc.nz);
-  printf( " k(in Pi units):  %lf \n",lc.k);
-  printf( " alpha:  %lf \n",lc.alpha);
+  printf( "k(in Pi units):  %lf \n",lc.k);
+  printf( "alpha:  %lf \n",lc.alpha);
   printf( "tau:  %e  \n",lc.tau);
 
   
