@@ -92,49 +92,7 @@ int main (int argc, char * argv[]) {
 	}
       rho[nz+1]=lc_environment.sigma0[1];
     }
-  else if ( strcmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
-    {
 
-
-
-      int i,j,k,ii,jj,kk;
-      double trash_double;	
-      FILE * ic_file;
-      char string_placeholder[400];
-      int read_status;
-      int reading_line=1;
-  
-      ic_file=fopen(lc_environment.ic_file_name,"r");
-      if (ic_file== NULL)
-	{
-	  printf("Unable to find the file \"%s\".\nPlease check your initial condition file name.\n\nAborting the program.\n\n",lc_environment.ic_file_name);
-	  exit(0);
-	}
-
-      //get the file header:
-  
-      printf("\nReading initial conditions from \"%s\".\n",lc_environment.ic_file_name);
-  
-      //removing the header:
-      fgets(string_placeholder,400,ic_file);
-      reading_line++;
-
-
-      //Let's work:
-
-      for(k= 0; k< nz; k++)
-	{
-	  fgets(string_placeholder,400,ic_file);
-	  read_status=sscanf(string_placeholder,"%lf %lf\n",&trash_double,&rho[k]);
-	  //read_check(read_status,reading_line);
-
-
-      	      
-	  reading_line++;
-	}
-      
-  
-    }
   else 
     {
 
@@ -145,15 +103,13 @@ int main (int argc, char * argv[]) {
 
   printf("\n\nStarting calculations\n\n");
 
-
-  total_particles=calculate_total_particle_quantity ( rho,
-						      & lc_environment);
-  
   time_file=fopen(time_file_name,"w");
-  fprintf(time_file,"#time   sigma_b   sigma_t total_particles\n");
-  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+1],total_particles);
-  
+  fprintf(time_file,"#time   sigma_b   sigma_t second_moment total_particles\n");
+
+  //Printing initial conditions data to files:
+  print_sigma_time(lc_environment, rho, time, time_file);  
   print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
+  
   printf("snapshot %d: %lf\n",snapshot_number,time);
   snapshot_number++;
 
@@ -174,10 +130,8 @@ int main (int argc, char * argv[]) {
       print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
       snapshot_number++;
 
-      total_particles=calculate_total_particle_quantity ( rho,
-						      & lc_environment);
-      fprintf(time_file,"%e  %e  %e  %e \n",time, rho[0],rho[nz+1], total_particles);
-      fflush(time_file);
+      print_sigma_time(lc_environment, rho, time, time_file);  
+      
 	
     };
   
@@ -307,7 +261,7 @@ struct lc_cell mu = *(struct lc_cell *)params;
   //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
   //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
   //
-  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
+  //Gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
   //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-1,(-(k/dz) ));
     
   return GSL_SUCCESS;
@@ -373,9 +327,27 @@ void print_log_file(const struct lc_cell lc,
   printf( "Simulation time:            %lf  \n\n",tf);
     
 };
-//
-//
-//
+
+
+void print_sigma_time(const struct lc_cell lc,
+		    const double * rho,
+		    const double  time,
+                    FILE * time_file)
+{
+  const int nz=lc.nz;
+  const double dz = lz/(nz-1);
+  double total_particles;
+  double average_rho;
+  //double average_rho=calculate_average_rho ( rho,
+  //                                           & lc);
+  total_particles=calculate_total_particle_quantity(  rho,
+						    & lc);
+  
+  fprintf(time_file,"%e  %e  %e  %e\n",time, rho[0],rho[nz+1],total_particles);
+  fflush(time_file);
+
+}
+
 double calculate_total_particle_quantity ( const double rho[],
 					   const void  * params)
 {
@@ -398,3 +370,50 @@ double calculate_total_particle_quantity ( const double rho[],
   
   return total_particle_quantity;
 }
+
+double calculate_average_rho ( const double rho[],
+                               const void  * params)
+{
+
+    struct lc_cell mu = *(struct lc_cell *)params;
+  const int nz=mu.nz;
+  const double dz = lz/(nz-1);
+  double average_rho;
+
+  average_rho+=rho[1]*dz/2.;
+  for(int ii=2; ii<nz;ii++)
+    {
+
+      average_rho+=dz*rho[ii];
+
+    }
+  average_rho+=rho[nz]*dz/2.;
+  
+  return average_rho;
+}
+
+
+//double calculate_average_rho_z_1 ( const double rho[],
+//                               const void  * params)
+//{
+//  
+//  struct lc_cell mu = *(struct lc_cell *)params;
+//  const int nz=mu.nz;
+//  const double dz = lz/(nz-1);
+//  double average_rho_z_1;
+//  double z_position=-lz/2.;  
+//    
+//  average_rho_z_1+=rho[1]*dz/2.;
+//  for(int ii=2; ii<nz;ii++)
+//    {
+//      z_position=-lz/2.+dz*(ii-1);  
+//      average_rho_z_1+=dz*rho[ii]*z_position;
+//
+//    }
+//
+//  z_position=-lz/2.
+//  average_rho_z_1+=rho[nz]*dz/2.;
+//
+//  return average_rho_z_1;
+//}
+

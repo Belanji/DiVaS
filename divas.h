@@ -50,4 +50,9 @@ void print_log_file(const struct lc_cell,
 		    const char []);
 
 
+void print_sigma_time(const struct lc_cell lc,
+		    const double * rho,
+		    const double  time,
+                      FILE * time_file);
+
 #endif
