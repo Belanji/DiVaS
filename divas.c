@@ -337,6 +337,7 @@ void print_sigma_time(const struct lc_cell lc,
   const int nz=lc.nz;
   const double dz = lz/(nz-1);
   double total_particles;
+  double second_moment;
   double average_rho;
   double average_rho_z_1;
   double average_rho_z_2;
@@ -346,8 +347,10 @@ void print_sigma_time(const struct lc_cell lc,
   average_rho_z_2=calculate_average_rho_z_2( rho, &lc);
   
   total_particles=calculate_total_particle_quantity(  rho, & lc);
+
+  second_moment=average_rho_z_2-(2-average_rho)*average_rho_z_1*average_rho_z_1;
   
-  fprintf(time_file,"%e  %e  %e  %e  %e\n",time, rho[0],rho[nz+1],average_rho_z_2, total_particles);
+  fprintf(time_file,"%e  %e  %e  %e  %e\n",time, rho[0],rho[nz+1],second_moment, total_particles);
   fflush(time_file);
 
 }
