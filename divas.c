@@ -338,15 +338,16 @@ void print_sigma_time(const struct lc_cell lc,
   const double dz = lz/(nz-1);
   double total_particles;
   double average_rho;
+  double average_rho_z_1;
+  double average_rho_z_2;
 
-
-  average_rho=calculate_average_rho ( rho,
-                                             & lc);
-
-  total_particles=calculate_total_particle_quantity(  rho,
-						    & lc);
+  average_rho=calculate_average_rho ( rho,   & lc);
+  average_rho_z_1=calculate_average_rho_z_1( rho, &lc);
+  average_rho_z_2=calculate_average_rho_z_2( rho, &lc);
   
-  fprintf(time_file,"%e  %e  %e  %e  %e\n",time, rho[0],rho[nz+1],average_rho, total_particles);
+  total_particles=calculate_total_particle_quantity(  rho, & lc);
+  
+  fprintf(time_file,"%e  %e  %e  %e  %e\n",time, rho[0],rho[nz+1],average_rho_z_2, total_particles);
   fflush(time_file);
 
 }
@@ -374,6 +375,8 @@ double calculate_total_particle_quantity ( const double rho[],
   return total_particle_quantity;
 }
 
+
+
 double calculate_average_rho ( const double rho[],
                                const void  * params)
 {
@@ -383,7 +386,7 @@ double calculate_average_rho ( const double rho[],
   const double dz = lz/(nz-1);
   double average_rho;
 
-  average_rho+=rho[1]*dz/2.;
+  average_rho=rho[1]*dz/2.;
   for(int ii=2; ii<nz;ii++)
     {
 
@@ -396,27 +399,51 @@ double calculate_average_rho ( const double rho[],
 }
 
 
-//double calculate_average_rho_z_1 ( const double rho[],
-//                               const void  * params)
-//{
-//  
-//  struct lc_cell mu = *(struct lc_cell *)params;
-//  const int nz=mu.nz;
-//  const double dz = lz/(nz-1);
-//  double average_rho_z_1;
-//  double z_position=-lz/2.;  
-//    
-//  average_rho_z_1+=rho[1]*dz/2.;
-//  for(int ii=2; ii<nz;ii++)
-//    {
-//      z_position=-lz/2.+dz*(ii-1);  
-//      average_rho_z_1+=dz*rho[ii]*z_position;
-//
-//    }
-//
-//  z_position=-lz/2.
-//  average_rho_z_1+=rho[nz]*dz/2.;
-//
-//  return average_rho_z_1;
-//}
+double calculate_average_rho_z_1 ( const double rho[],
+                                   const void  * params)
+{
+  
+  struct lc_cell mu = *(struct lc_cell *)params;
+  const int nz=mu.nz;
+  const double dz = lz/(nz-1);
+  double average_rho_z_1;
+  double z_position=-lz/2.;  
+    
+  average_rho_z_1=z_position*rho[1]*dz/2.;
+  for(int ii=2; ii<nz;ii++)
+    {
+      z_position=-lz/2.+dz*(ii-1);  
+      average_rho_z_1+=dz*rho[ii]*z_position;
 
+    }
+
+  z_position=lz/2.;
+  average_rho_z_1+=z_position*rho[nz]*dz/2.;
+
+  return average_rho_z_1;
+}
+
+double calculate_average_rho_z_2 ( const double rho[],
+                                   const void  * params)
+{
+  
+  struct lc_cell mu = *(struct lc_cell *)params;
+  const int nz=mu.nz;
+  const double dz = lz/(nz-1);
+  double average_rho_z_2;
+  double z_position=-lz/2.;  
+    
+  average_rho_z_2=z_position*z_position*rho[1]*dz/2.;
+  for(int ii=2; ii<nz;ii++)
+    {
+      z_position=-lz/2.+dz*(ii-1);  
+      average_rho_z_2 += dz*rho[ii]*z_position*z_position;
+
+    }
+
+  z_position=lz/2.;
+  average_rho_z_2+=z_position*z_position*rho[nz]*dz/2.;
+
+  return average_rho_z_2
+    ;
+}

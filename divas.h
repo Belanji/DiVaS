@@ -60,4 +60,10 @@ double calculate_average_rho ( const double rho[],
                                const void  * params);
 
 
+double calculate_average_rho_z_1 ( const double rho[],
+                                   const void  * params);
+
+double calculate_average_rho_z_2 ( const double rho[],
+                                   const void  * params);
+
 #endif
