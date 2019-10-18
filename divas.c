@@ -21,7 +21,7 @@ int main (int argc, char * argv[]) {
   double time, dz,  dt=1e-3;
   double timeprint=0.2;
   FILE * time_file, * snapshot_file;
-  const char * initial_conditions="standard";
+  const char * initial_conditions="delta";
   const char * time_file_name="sigma_time.dat";
   const char * output_file_name="rho_time";
   int timesteper_kind_flag=0;
@@ -75,8 +75,8 @@ int main (int argc, char * argv[]) {
 
 
   //Choose the integrator:
-  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
-  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
+  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
+  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
 
 
   gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
@@ -90,7 +90,8 @@ int main (int argc, char * argv[]) {
   The rho values are placed between 2 and nz+1.*/
   
 
-  if ( strcmp(lc_environment.initial_conditions,"standard") == 0 )
+  if (    strcasecmp(lc_environment.initial_conditions,"standard") == 0
+       || strcasecmp(lc_environment.initial_conditions,"homogeneous") == 0)
     {
 
 
@@ -106,7 +107,22 @@ int main (int argc, char * argv[]) {
       rho[nz+2]=0;
       rho[nz+3]=lc_environment.sigma0[1];
     }
-  else if ( strcmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
+  else if (    strcasecmp(lc_environment.initial_conditions,"delta") == 0)
+    {
+
+
+      rho[0]=lc_environment.sigma0[0];
+      rho[1]=0;
+            
+      for (int ii=2; ii<nz+2;ii++) rho[ii]=0;
+
+      rho[nz/2 +2]=2*lc_environment.rho0/dz;
+	
+	  	  	
+      rho[nz+2]=0;
+      rho[nz+3]=lc_environment.sigma0[1];
+    }
+  else if ( strcasecmp(lc_environment.initial_conditions,"read_from_file") == 0 || strcmp(lc_environment.initial_conditions,"ic_file") == 0)
     {
 
 
@@ -218,13 +234,12 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   double alpha=mu.alpha;
   const double tau=mu.tau;
   double tau_d[2], tau_k[2], tau_a[2];
-  double drho, d2rho, dsigma, drho_dt;
+  double drho, d2rho, dsigma, sigma, drho_dt;
   double GhostRho;
   double z_position;
   
   tau_d[0]=mu.tau_d[0];
   tau_d[1]=mu.tau_d[1];
-  
   
   tau_k[0]=mu.tau_k[0];
   tau_k[1]=mu.tau_k[1];
@@ -236,6 +251,8 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   /*bottom boundary equations */
 
   z_position=-lz/2;
+
+  sigma=rho[0];
   dsigma=rho[1];
   
   
@@ -250,11 +267,18 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 
   
   Rhs[0]=dsigma;
-  Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])-4*dsigma/(tau_d[0]*tau_a[0])+rho[2]/(tau_a[0]*tau_k[0])
-				  -exp(-t*tau_d[0]/(tau_a[0]*4.))*rho[0]/(tau*tau_a[0]));
+  Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])
+                                  -4*dsigma/(tau_d[0]*tau_a[0])
+                                  +rho[2]/(tau_a[0]*tau_k[0])
+				  -exp(-t*tau_d[0]/(tau_a[0]*4.))*sigma/(tau*tau_a[0]));
 
   Rhs[2]=drho_dt;
 
+
+  Rhs[0]=0;
+  Rhs[1]=0;
+  Rhs[2]=0;
+  
   /*Bulk equations */
   
   for(int ii=3; ii<nz+1; ii++)
@@ -288,6 +312,11 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   
   Rhs[nz+3]=dsigma;
 
+
+  Rhs[nz+1]=0;
+  Rhs[nz+2]=0;
+  Rhs[nz+3]=0;
+  
   return GSL_SUCCESS;
       
     };
@@ -295,46 +324,64 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 
 int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], void * params)
 {
-struct lc_cell mu = *(struct lc_cell *)params;
+
+
+  struct lc_cell mu = *(struct lc_cell *)params;
   int nz=mu.nz;
   double dz = lz/(nz-1);
-  double k= mu.k;
+  double k=pi*mu.k;
   double alpha=mu.alpha;
-  double drho, d2rho;
+  const double tau=mu.tau;
+  double tau_d[2], tau_k[2], tau_a[2];
+  double drho, d2rho, dsigma, drho_dt;
+  double GhostRho;
+  double z_position;
+  double dz_2=1/(dz*dz);
+  double dz_1=1/dz;
+  
+  
   gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+4, nz+4);
   
-  //tau[0]=mu.tau[0];
-  //tau[1]=mu.tau[1];
-  //
-  //
-  //kappa[0]=mu.kappa[0];
-  //kappa[1]=mu.kappa[1];
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
-  //
-  //for(int ii=0; ii<nz+4;ii++)
-  //  {
-  //
-  //    dRhsdt[ii]=0;
-  //    
-  //  };
-  //
-  //
-  //for(int i=1;i<nz+4;i++){
-  //
-  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i-1,k/(dz*dz) );
-  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i  ,-2.0*k/(dz*dz));
-  //  gsl_matrix_set ( &dRhsdrho_mat.matrix,i,i+1,k/(dz*dz) );
-  //
-  //};
-  //
-  //
+  tau_d[0]=mu.tau_d[0];
+  tau_d[1]=mu.tau_d[1];
+    
+  tau_k[0]=mu.tau_k[0];
+  tau_k[1]=mu.tau_k[1];
+
+  tau_a[0]=mu.tau_a[0];
+  tau_a[1]=mu.tau_a[1];
+
+  
+  
+
+  gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
+  
+  for(int ii=0; ii<nz+4;ii++)
+    {
+  
+      dRhsdt[ii]=0;
+      
+    };
+  
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0  ,1);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1  ,1);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2  ,1);
+  
+  for(int i=3;i<nz+1;i++)
+    {
+
+      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i-1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
+      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i  , (1.0+alpha*cos(k*z_position))*(-2*dz_2)  );
+     gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i+1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
+
+  
+    };
+
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+1, 1);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+2, 1);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+3, 1);
+
+
   //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
   //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
   //
