@@ -274,11 +274,6 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 
   Rhs[2]=drho_dt;
 
-
-  Rhs[0]=0;
-  Rhs[1]=0;
-  Rhs[2]=0;
-  
   /*Bulk equations */
   
   for(int ii=3; ii<nz+1; ii++)
@@ -355,24 +350,58 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   
 
   gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
+
+  double tau_d2=tau_d[0]*tau_d[0];
+  double tau_d3=tau_d[0]*tau_d[0]*tau_d[0];
+  double tau_a2=tau_a[0]*tau_a[0];
   
-  for(int ii=0; ii<nz+4;ii++)
+  dRhsdt[0]=tau_d3*exp(-t*tau_d[0]*0.25/tau_a[0])*rho[0]/(64*tau*tau_a2); 
+  for(int ii=1; ii<nz+4;ii++)
     {
   
       dRhsdt[ii]=0;
       
     };
-  
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0  ,1);
+
+  z_position=-lz/2;
+
+  //Boundary consitions:
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-tau_d2*exp(-t*tau_d[0]*0.25/tau_a[0])/(16.*tau*tau_a[0] );
+
+
   gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1  ,1);
   gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2  ,1);
+
+
+  sigma=rho[0];
+  dsigma=rho[1];
+  
+  
+  //Extrapolate ghost point:
+  GhostRho=rho[3]-2*dz*rho[1]/(1.0+alpha*cos(k*z_position));
+  
+
+  drho=(rho[3]-GhostRho)/(2*dz);
+  d2rho=(rho[3]+GhostRho-2.0*rho[2])/(dz*dz);
+//
+  drho_dt=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+
+  
+  Rhs[0]=dsigma;
+  Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])
+                                  -4*dsigma/(tau_d[0]*tau_a[0])
+                                  +rho[2]/(tau_a[0]*tau_k[0])
+				  -exp(-t*tau_d[0]/(tau_a[0]*4.))*sigma/(tau*tau_a[0]));
+
+  Rhs[2]=drho_dt;
+
   
   for(int i=3;i<nz+1;i++)
     {
 
       gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i-1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
       gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i  , (1.0+alpha*cos(k*z_position))*(-2*dz_2)  );
-     gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i+1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
+      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i+1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
 
   
     };
