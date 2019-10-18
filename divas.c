@@ -21,7 +21,7 @@ int main (int argc, char * argv[]) {
   double time, dz,  dt=1e-3;
   double timeprint=0.2;
   FILE * time_file, * snapshot_file;
-  const char * initial_conditions="delta";
+  const char * initial_conditions="homogeneous";
   const char * time_file_name="sigma_time.dat";
   const char * output_file_name="rho_time";
   int timesteper_kind_flag=0;
@@ -347,7 +347,6 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   tau_a[1]=mu.tau_a[1];
 
   
-  
 
   gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
 
@@ -366,34 +365,23 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   z_position=-lz/2;
 
   //Boundary consitions:
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-tau_d2*exp(-t*tau_d[0]*0.25/tau_a[0])/(16.*tau*tau_a[0] );
 
 
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1  ,1);
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2  ,1);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0  ,0);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1  ,1);
 
 
-  sigma=rho[0];
-  dsigma=rho[1];
-  
-  
-  //Extrapolate ghost point:
-  GhostRho=rho[3]-2*dz*rho[1]/(1.0+alpha*cos(k*z_position));
-  
-
-  drho=(rho[3]-GhostRho)/(2*dz);
-  d2rho=(rho[3]+GhostRho-2.0*rho[2])/(dz*dz);
-//
-  drho_dt=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,0,-tau_d2*exp(-t*tau_d[0]*0.25/tau_a[0])/(16.*tau*tau_a[0] ) );
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1, (tau_d[0]*(-(1/tau_a[0]) - 2/(dz*tau_k[0]) - (alpha*k*sin(k*z_position))/(tau_k[0] + alpha*tau_k[0]*cos(k*z_position))))/4.);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,2,  (tau_d[0]*(-8*tau_a[0] + dz*dz*tau_d[0] - 8*alpha*tau_a[0]*cos(k*z_position)))/(16.*dz*dz)*tau_a[0]*tau_k[0]);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,3, (tau_d[0] + alpha*tau_d[0]*cos(k*z_position))/(2.*(dz*dz)*tau_k[0]));
 
   
-  Rhs[0]=dsigma;
-  Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])
-                                  -4*dsigma/(tau_d[0]*tau_a[0])
-                                  +rho[2]/(tau_a[0]*tau_k[0])
-				  -exp(-t*tau_d[0]/(tau_a[0]*4.))*sigma/(tau*tau_a[0]));
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,1,-2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)));
 
-  Rhs[2]=drho_dt;
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2,(-2*(1 + alpha*cos(k*z_position)))/(dz*dz) );
+
+  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,3, (-2*(-1 - alpha*cos(k*z_position)))/(dz*dz) );
 
   
   for(int i=3;i<nz+1;i++)
