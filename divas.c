@@ -76,7 +76,7 @@ int main (int argc, char * argv[]) {
 
   //Choose the integrator:
   //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
-  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-8, 1e-8, 0.0);
+  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-10, 1e-10, 0.0);
 
 
   gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
@@ -475,12 +475,17 @@ void print_log_file(const struct lc_cell lc,
 
   printf("\nTime parameters:\n\n");
   printf( "maximum timestep (dt):      %e \n",dt);
-  printf( "Simulation time:            %lf  \n\n",tf);
-    
+  printf( "Simulation time:            %lf  \n",tf);
+
+
+  printf("Initial conditions: %s \n\n",lc.initial_conditions);
+
+
+  
 };
-//
-//
-//
+
+
+
 double calculate_total_particle_quantity ( const double rho[],
 					   const void  * params)
 {

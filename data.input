@@ -1,4 +1,4 @@
-nz         500
+nz         501
 
 k         2.
 alpha     0.50
@@ -16,7 +16,6 @@ tf          0.5
 timeprint   0.05
 dt          1e-4
 
+#Initial condtions (chose between "homogeneous" and "delta")
+initial_conditions  delta
 
-#initial_conditions  read_from_file
-#ic_file             ic_file.dat
-#output_file         output_file.dat
