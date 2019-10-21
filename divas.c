@@ -307,10 +307,6 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   
   Rhs[nz+3]=dsigma;
 
-
-  Rhs[nz+1]=0;
-  Rhs[nz+2]=0;
-  Rhs[nz+3]=0;
   
   return GSL_SUCCESS;
       
@@ -355,32 +351,38 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   double tau_a2=tau_a[0]*tau_a[0];
   
   dRhsdt[0]=tau_d3*exp(-t*tau_d[0]*0.25/tau_a[0])*rho[0]/(64*tau*tau_a2); 
-  for(int ii=1; ii<nz+4;ii++)
+  for(int ii=1; ii<nz+3;ii++)
     {
   
       dRhsdt[ii]=0;
       
     };
 
+  tau_d2=tau_d[1]*tau_d[1];
+  tau_d3=tau_d[1]*tau_d[1]*tau_d[1];
+  tau_a2=tau_a[1]*tau_a[1];
+  
+  
+  dRhsdt[nz+3]=tau_d3*rho[nz+3]/(64.*exp((t*tau_d[1])/(4.*tau_a[1]))*tau*tau_a2);
+
+  
   z_position=-lz/2;
 
   //Boundary consitions:
-
-
   gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0  ,0);
   gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1  ,1);
 
+  
 
   gsl_matrix_set ( &dRhsdrho_mat.matrix,1,0,-tau_d2*exp(-t*tau_d[0]*0.25/tau_a[0])/(16.*tau*tau_a[0] ) );
   gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1, (tau_d[0]*(-(1/tau_a[0]) - 2/(dz*tau_k[0]) - (alpha*k*sin(k*z_position))/(tau_k[0] + alpha*tau_k[0]*cos(k*z_position))))/4.);
   gsl_matrix_set ( &dRhsdrho_mat.matrix,1,2,  (tau_d[0]*(-8*tau_a[0] + dz*dz*tau_d[0] - 8*alpha*tau_a[0]*cos(k*z_position)))/(16.*dz*dz)*tau_a[0]*tau_k[0]);
   gsl_matrix_set ( &dRhsdrho_mat.matrix,1,3, (tau_d[0] + alpha*tau_d[0]*cos(k*z_position))/(2.*(dz*dz)*tau_k[0]));
 
+
   
   gsl_matrix_set ( &dRhsdrho_mat.matrix,2,1,-2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)));
-
   gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2,(-2*(1 + alpha*cos(k*z_position)))/(dz*dz) );
-
   gsl_matrix_set ( &dRhsdrho_mat.matrix,2,3, (-2*(-1 - alpha*cos(k*z_position)))/(dz*dz) );
 
   
@@ -394,16 +396,22 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   
     };
 
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+1, 1);
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+2, 1);
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+3, 1);
+
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz, -2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)) );
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+1,  (-2*(1 + alpha*cos(k*z_position)))/(dz*dz)    );
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+2,  -2/dz + (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position))   );
 
 
-  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0,-(k/dz)) ;
-  //gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1,k/(dz));
-  //
-  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-2,k/(dz) );		  
-  //gsl_matrix_set( &dRhsdrho_mat.matrix,nz-1,nz-1,(-(k/dz) ));
+
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz, (tau_d[1] + alpha*tau_d[1]*cos(k*z_position))/(2.*(dz*dz)*tau_k[1]) );
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+1, -(tau_d[1] + alpha*tau_d[1]*cos(k*z_position))/(2.*(dz*dz)*tau_k[1]) );
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+2, (tau_d[1]*(-(1/tau_a[1]) - 2/(dz*tau_k[1]) + (alpha*k*sin(k*z_position))/(tau_k[1] + alpha*tau_k[1]*cos(k*z_position))))/4. );
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+3, -(tau_d[1]*tau_d[1])/(16.*exp((t*tau_d[1])/(4.*tau_a[1]))*tau*tau_a[1]) );
+
+  
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+2, 1);
+  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+3, 0);
+
     
   return GSL_SUCCESS;
   
