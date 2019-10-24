@@ -75,8 +75,9 @@ int main (int argc, char * argv[]) {
 
 
   //Choose the integrator:
-  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-6, 1e-9, 0.0);
-  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-10, 1e-10, 0.0);
+  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_msbdf, 1e-14, 1e-14, 0.0);
+  gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd, 1e-10, 1e-10, 0.0);
+  //gsl_odeiv2_driver * pde_driver =gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_bsimp, 1e-14, 1e-14, 0.0);
 
 
   gsl_odeiv2_driver_set_hmax (pde_driver , dt );  
@@ -270,7 +271,7 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])
                                   -4*dsigma/(tau_d[0]*tau_a[0])
                                   +rho[2]/(tau_a[0]*tau_k[0])
-				  -exp(-t*tau_d[0]/(tau_a[0]*4.))*sigma/(tau*tau_a[0]));
+				  -sigma/(tau*tau_a[0]));
 
   Rhs[2]=drho_dt;
 
@@ -302,8 +303,10 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   drho_dt=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
   
   Rhs[nz+1]=drho_dt;
-  Rhs[nz+2]=(tau_d[1]*tau_d[1]/16.)*(4*drho_dt/(tau_d[1]*tau_k[1])-4*dsigma/(tau_d[1]*tau_a[1])+rho[nz+1]/(tau_a[1]*tau_k[1])
-				     -exp(-t*tau_d[1]/(4*tau_a[1]))*rho[nz+3]/(tau*tau_a[1]));
+  Rhs[nz+2]=(tau_d[1]*tau_d[1]/16.)*(4*drho_dt/(tau_d[1]*tau_k[1])
+				     -4*dsigma/(tau_d[1]*tau_a[1])
+				     +rho[nz+1]/(tau_a[1]*tau_k[1])
+				     -rho[nz+3]/(tau*tau_a[1]));
   
   Rhs[nz+3]=dsigma;
 
@@ -350,7 +353,7 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   double tau_d3=tau_d[0]*tau_d[0]*tau_d[0];
   double tau_a2=tau_a[0]*tau_a[0];
   
-  dRhsdt[0]=tau_d3*exp(-t*tau_d[0]*0.25/tau_a[0])*rho[0]/(64*tau*tau_a2); 
+  dRhsdt[0]=tau_d3*rho[0]/(64*exp(t*tau_d[0]*0.25/tau_a[0])*tau*tau_a2); 
   for(int ii=1; ii<nz+3;ii++)
     {
   

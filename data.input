@@ -1,21 +1,21 @@
-nz         501
+nz         601
 
 k         2.
 alpha     0.50
 
 tau       1e-1
 
-tau_a   1e-3
+tau_a   1e-9
 tau_d   4e-2
 tau_k   1e-2
 sigma0  0.0
 
 
 ti          0.0
-tf          0.5
-timeprint   0.05
-dt          1e-4
+tf          1.5
+timeprint   15.0
+dt          1e-3
 
 #Initial condtions (chose between "homogeneous" and "delta")
-initial_conditions  delta
+initial_conditions  homogeneous
 
