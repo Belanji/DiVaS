@@ -50,4 +50,20 @@ void print_log_file(const struct lc_cell,
 		    const char []);
 
 
+void print_sigma_time(const struct lc_cell lc,
+		    const double * rho,
+		    const double  time,
+                      FILE * time_file);
+
+
+double calculate_average_rho ( const double rho[],
+                               const void  * params);
+
+
+double calculate_average_rho_z_1 ( const double rho[],
+                                   const void  * params);
+
+double calculate_average_rho_z_2 ( const double rho[],
+                                   const void  * params);
+
 #endif
