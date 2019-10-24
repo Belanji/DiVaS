@@ -95,7 +95,7 @@ void parse_input_file(struct lc_cell  * lc,
 	{
 
 	  error_handler=scanf("%lf",&(lc->tau_d[0]));
-	  lc->tau_d[1]=lc->tau_d[0];
+	  
 	  
 	  if (error_handler <= 0 )
 	    {
@@ -104,7 +104,17 @@ void parse_input_file(struct lc_cell  * lc,
 	      printf("Please review your input file.\n Aborting the program\n");
 	      exit(0);
 	    };
+
+	  error_handler=scanf("%lf",&(lc->tau_d[1]));
 	  
+	  
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
 	  fgets(garbage,400,stdin);
 
 
@@ -113,7 +123,19 @@ void parse_input_file(struct lc_cell  * lc,
 	{
 
 	  error_handler=scanf("%lf",&(lc->tau_a[0]));
-	  lc->tau_a[1]=lc->tau_a[0];
+
+	  
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+
+
+	  error_handler=scanf("%lf",&(lc->tau_a[1]));
+
 	  
 	  if (error_handler <= 0 )
 	    {
@@ -131,7 +153,19 @@ void parse_input_file(struct lc_cell  * lc,
 	{
 
 	  error_handler=scanf("%lf",&(lc->tau_k[0]));
-	  lc->tau_k[1]=lc->tau_k[0];
+
+	  
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+
+	  
+	  error_handler=scanf("%lf",&(lc->tau_k[1]));
+
 	  
 	  if (error_handler <= 0 )
 	    {
@@ -149,7 +183,7 @@ void parse_input_file(struct lc_cell  * lc,
 	{
 
 	  error_handler=scanf("%lf",&(lc->sigma0[0]));
-	  lc->sigma0[0]=lc->sigma0[1];
+	  
 	  
 	  if (error_handler <= 0 )
 	    {
@@ -158,6 +192,19 @@ void parse_input_file(struct lc_cell  * lc,
 	      printf("Please review your input file.\n Aborting the program\n");
 	      exit(0);
 	    };
+
+
+	  error_handler=scanf("%lf",&(lc->sigma0[1]));
+	  
+	  
+	  if (error_handler <= 0 )
+	    {
+
+	      printf("You placed a comment or a non numeric value after %s in your input file.\n",parser);
+	      printf("Please review your input file.\n Aborting the program\n");
+	      exit(0);
+	    };
+
 	  
 	  fgets(garbage,400,stdin);
 

@@ -469,9 +469,10 @@ void print_log_file(const struct lc_cell lc,
   
   printf("\nBoundary conditions:\n\n");
 
-  printf(  "tau_a:  %e  \n",lc.tau_a[0] );
-  printf(  "tau_d:  %e  \n",lc.tau_d[0] );
-  printf(  "tau_k:  %e  \n",lc.tau_k[0] );
+  printf("Boundary_Parameter   bottom       top\n");
+  printf("tau_a:               %g       %g\n",lc.tau_a[0],lc.tau_a[1] );
+  printf("tau_d:               %g       %g\n",lc.tau_d[0],lc.tau_d[1] );
+  printf("tau_k:               %g       %g\n",lc.tau_k[0],lc.tau_k[1] );
 
 
 
