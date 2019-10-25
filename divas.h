@@ -3,11 +3,12 @@
 #define director__
 #include  <stdio.h>
 #include <complex.h>
+
 struct lc_cell
 {
 
-  double k, alpha, tau;
-  double tau_k[2], tau_d[2], tau_a[2];
+  double k, alpha, tau_d;
+  double tau_k[2], tau[2], tau_a[2];
   double ti, tf, dt;
   double rho0;
   double sigma0[2];

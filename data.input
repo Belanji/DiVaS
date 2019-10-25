@@ -2,12 +2,12 @@ nz         601
 
 k         2.
 alpha     0.50
+tau_d     4e-2   
 
-tau       1e-1
 
 #Boundary_parameter  bottom   top 
 tau_a                1e-9     1.e-9
-tau_d                4e-2     4.e-2
+tau                  1e-1     1e-1
 tau_k                1e-2     1.e-2	
 sigma0               0.0      0.0
 

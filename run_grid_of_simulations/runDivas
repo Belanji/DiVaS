@@ -2,6 +2,7 @@
 
 
 alphas=(0.1 0.2 0.4 0.6)
+taus_a=(0.01 0.1 1 10)
 taus_d=(0.01 0.1 1 10)
 taus_k=(0.01 0.1 1)
 taus=(0.01 0.1 5)
@@ -66,22 +67,35 @@ do
 
                     fi
 
+		    for tau_a in ${taus_a[@]}
+                    do
+            
+			if [ ! -d alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk}/tau_a=${tau_a} ]
+			then
 
-                    cd ${baseDirr}/alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk}/
+                        
+                            mkdir alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk}/tau_a=${tau_a}
+
+			fi
+
+			cd ${baseDirr}/alpha=${alpha}/tau_d=${tau_d}/tau_k=${tau_k}/tau=${tau}/k=${kk}/tau_a=${tau_a}
 
 
 
-                    sed -e "s/kk_placeholder/${kk}/" \
-                        -e "s/alpha_placeholder/${alpha}/" \
-                        -e "s/tau_placeholder/${tau}/" \
-                        -e "s/taud_placeholder/${tau_d}/" \
-                        -e "s/tauk_placeholder/${tau_k}/" \
-                        ${baseDirr}/${inputFile} >data.input
+			sed -e "s/kk_placeholder/${kk}/g" \
+                            -e "s/alpha_placeholder/${alpha}/g" \
+                            -e "s/tau_placeholder/${tau}/g" \
+                            -e "s/taud_placeholder/${tau_d}/g" \
+                            -e "s/tauk_placeholder/${tau_k}/g" \
+			    -e "s/taua_placeholder/${tau_a}/g" \
+                            ${baseDirr}/${inputFile} >data.input
 
                     
                     ${divasDirr}/divas <data.input >${logFile}
 
                     cd ${baseDirr}
+
+		    done
                     
                 done
                 

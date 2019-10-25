@@ -37,7 +37,7 @@ int main (int argc, char * argv[]) {
   lc_environment.k=1.0;
   lc_environment.alpha=1.0;
 
-  lc_environment.tau=1.0;
+  lc_environment.tau_d=1.0;
 
   lc_environment.tau_k[0]=1.0;
   lc_environment.tau_k[1]=1.0;
@@ -46,8 +46,8 @@ int main (int argc, char * argv[]) {
   lc_environment.tau_a[1]=1.0;
 
   
-  lc_environment.tau_d[0]=1.0;
-  lc_environment.tau_d[1]=1.0;
+  lc_environment.tau[0]=1.0;
+  lc_environment.tau[1]=1.0;
 
   lc_environment.sigma0[0]=0;
   lc_environment.sigma0[1]=0;
@@ -136,7 +136,7 @@ int main (int argc, char * argv[]) {
   time_file=fopen(time_file_name,"w");
 
   //Printing initial conditions data to files:
-  fprintf(time_file,"#time   sigma_b   sigma_t second_moment total_particles\n");
+  fprintf(time_file,"#time         sigma_b        sigma_t      second_moment    total_particles\n");
   print_sigma_time(lc_environment, rho, time, time_file);  
   print_snapshot_to_file(rho,time,dz,nz,output_file_name,snapshot_number);
   
@@ -186,14 +186,14 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   double dz = lz/(nz-1);
   double k=pi*mu.k;
   double alpha=mu.alpha;
-  const double tau=mu.tau;
-  double tau_d[2], tau_k[2], tau_a[2];
+  const double tau_d=mu.tau_d;
+  double tau[2], tau_k[2], tau_a[2];
   double drho, d2rho, dsigma, sigma, drho_dt;
   double GhostRho;
   double z_position;
   
-  tau_d[0]=mu.tau_d[0];
-  tau_d[1]=mu.tau_d[1];
+  tau[0]=mu.tau[0];
+  tau[1]=mu.tau[1];
   
   tau_k[0]=mu.tau_k[0];
   tau_k[1]=mu.tau_k[1];
@@ -221,10 +221,10 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
 
   
   Rhs[0]=dsigma;
-  Rhs[1]=(tau_d[0]*tau_d[0]/16.)*(4*drho_dt/(tau_d[0]*tau_k[0])
-                                  -4*dsigma/(tau_d[0]*tau_a[0])
+  Rhs[1]=(tau_d*tau_d/16.)*(4*drho_dt/(tau_d*tau_k[0])
+                                  -4*dsigma/(tau_d*tau_a[0])
                                   +rho[2]/(tau_a[0]*tau_k[0])
-				  -sigma/(tau*tau_a[0]));
+				  -sigma/(tau[0]*tau_a[0]));
 
   Rhs[2]=drho_dt;
 
@@ -256,10 +256,10 @@ int RhsFunction (double t, const double rho[], double Rhs[], void * params)
   drho_dt=(1.0+alpha*cos(k*z_position))*d2rho-alpha*k*sin(k*z_position)*drho;
   
   Rhs[nz+1]=drho_dt;
-  Rhs[nz+2]=(tau_d[1]*tau_d[1]/16.)*(4*drho_dt/(tau_d[1]*tau_k[1])
-				     -4*dsigma/(tau_d[1]*tau_a[1])
+  Rhs[nz+2]=(tau_d*tau_d/16.)*(4*drho_dt/(tau_d*tau_k[1])
+				     -4*dsigma/(tau_d*tau_a[1])
 				     +rho[nz+1]/(tau_a[1]*tau_k[1])
-				     -rho[nz+3]/(tau*tau_a[1]));
+				     -rho[nz+3]/(tau[1]*tau_a[1]));
   
   Rhs[nz+3]=dsigma;
 
@@ -278,19 +278,22 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   double dz = lz/(nz-1);
   double k=pi*mu.k;
   double alpha=mu.alpha;
-  const double tau=mu.tau;
-  double tau_d[2], tau_k[2], tau_a[2];
+  const double tau_d=mu.tau_d;
+  double tau[2], tau_k[2], tau_a[2];
   double drho, d2rho, dsigma, drho_dt;
   double GhostRho;
   double z_position;
-  double dz_2=1/(dz*dz);
-  double dz_1=1/dz;
-  
+
+  const double dz_2=1/(dz*dz);
+  const double dz_1=1/dz;
+  const double tau_d2=tau_d*tau_d;
+  const double tau_d3=tau_d*tau_d*tau_d;
+
   
   gsl_matrix_view dRhsdrho_mat= gsl_matrix_view_array (dRhsdrho, nz+4, nz+4);
   
-  tau_d[0]=mu.tau_d[0];
-  tau_d[1]=mu.tau_d[1];
+  tau[0]=mu.tau[0];
+  tau[1]=mu.tau[1];
     
   tau_k[0]=mu.tau_k[0];
   tau_k[1]=mu.tau_k[1];
@@ -302,24 +305,8 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
 
   gsl_matrix_set_zero( &dRhsdrho_mat.matrix );
 
-  double tau_d2=tau_d[0]*tau_d[0];
-  double tau_d3=tau_d[0]*tau_d[0]*tau_d[0];
-  double tau_a2=tau_a[0]*tau_a[0];
   
-  dRhsdt[0]=tau_d3*rho[0]/(64*exp(t*tau_d[0]*0.25/tau_a[0])*tau*tau_a2); 
-  for(int ii=1; ii<nz+3;ii++)
-    {
-  
-      dRhsdt[ii]=0;
-      
-    };
-
-  tau_d2=tau_d[1]*tau_d[1];
-  tau_d3=tau_d[1]*tau_d[1]*tau_d[1];
-  tau_a2=tau_a[1]*tau_a[1];
-  
-  
-  dRhsdt[nz+3]=tau_d3*rho[nz+3]/(64.*exp((t*tau_d[1])/(4.*tau_a[1]))*tau*tau_a2);
+  for(int ii=0; ii<nz+4;ii++)   dRhsdt[ii]=0;
 
   
   z_position=-lz/2;
@@ -327,46 +314,48 @@ int jacobian(double t, const double rho[], double * dRhsdrho, double dRhsdt[], v
   //Boundary consitions:
   gsl_matrix_set ( &dRhsdrho_mat.matrix,0,0  ,0);
   gsl_matrix_set ( &dRhsdrho_mat.matrix,0,1  ,1);
-
   
-
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,0,-tau_d2*exp(-t*tau_d[0]*0.25/tau_a[0])/(16.*tau*tau_a[0] ) );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1, (tau_d[0]*(-(1/tau_a[0]) - 2/(dz*tau_k[0]) - (alpha*k*sin(k*z_position))/(tau_k[0] + alpha*tau_k[0]*cos(k*z_position))))/4.);
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,2,  (tau_d[0]*(-8*tau_a[0] + dz*dz*tau_d[0] - 8*alpha*tau_a[0]*cos(k*z_position)))/(16.*dz*dz)*tau_a[0]*tau_k[0]);
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,3, (tau_d[0] + alpha*tau_d[0]*cos(k*z_position))/(2.*(dz*dz)*tau_k[0]));
-
-
   
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,1,-2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)));
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2,(-2*(1 + alpha*cos(k*z_position)))/(dz*dz) );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,3, (-2*(-1 - alpha*cos(k*z_position)))/(dz*dz) );
-
-  
-  for(int i=3;i<nz+1;i++)
-    {
-
-      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i-1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
-      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i  , (1.0+alpha*cos(k*z_position))*(-2*dz_2)  );
-      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i+1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
-
-  
-    };
+  double tau_a2=tau_a[0]*tau_a[0];
 
 
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz, -2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)) );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+1,  (-2*(1 + alpha*cos(k*z_position)))/(dz*dz)    );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+2,  -2/dz + (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position))   );
-
-
-
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz, (tau_d[1] + alpha*tau_d[1]*cos(k*z_position))/(2.*(dz*dz)*tau_k[1]) );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+1, -(tau_d[1] + alpha*tau_d[1]*cos(k*z_position))/(2.*(dz*dz)*tau_k[1]) );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+2, (tau_d[1]*(-(1/tau_a[1]) - 2/(dz*tau_k[1]) + (alpha*k*sin(k*z_position))/(tau_k[1] + alpha*tau_k[1]*cos(k*z_position))))/4. );
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+3, -(tau_d[1]*tau_d[1])/(16.*exp((t*tau_d[1])/(4.*tau_a[1]))*tau*tau_a[1]) );
-
-  
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+2, 1);
-  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+3, 0);
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,0,-tau_d2*exp(-t*tau_d*0.25/tau_a[0])/(16.*tau*tau_a[0] ) );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,1, (tau_d*(-(1/tau_a[0]) - 2/(dz*tau_k[0]) - (alpha*k*sin(k*z_position))/(tau_k[0] + alpha*tau_k[0]*cos(k*z_position))))/4.);
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,2,  (tau_d*(-8*tau_a[0] + dz*dz*tau_d - 8*alpha*tau_a[0]*cos(k*z_position)))/(16.*dz*dz)*tau_a[0]*tau_k[0]);
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,1,3, (tau_d + alpha*tau_d*cos(k*z_position))/(2.*(dz*dz)*tau_k[0]));
+//
+//
+//  
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,1,-2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)));
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,2,(-2*(1 + alpha*cos(k*z_position)))/(dz*dz) );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix,2,3, (-2*(-1 - alpha*cos(k*z_position)))/(dz*dz) );
+//
+//  
+//  for(int i=3;i<nz+1;i++)
+//    {
+//
+//      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i-1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
+//      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i  , (1.0+alpha*cos(k*z_position))*(-2*dz_2)  );
+//      gsl_matrix_set(  &dRhsdrho_mat.matrix,i,i+1, (1.0+alpha*cos(k*z_position))*dz_2 - alpha*k*sin(k*z_position)*(-dz_1*0.5) );
+//
+//  
+//    };
+//
+//
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz, -2/dz - (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position)) );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+1,  (-2*(1 + alpha*cos(k*z_position)))/(dz*dz)    );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+1, nz+2,  -2/dz + (alpha*k*sin(k*z_position))/(1 + alpha*cos(k*z_position))   );
+//
+//
+//
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz, (tau_d + alpha*tau_d*cos(k*z_position))/(2.*(dz*dz)*tau_k[1]) );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+1, -(tau_d + alpha*tau_d*cos(k*z_position))/(2.*(dz*dz)*tau_k[1]) );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+2, (tau_d*(-(1/tau_a[1]) - 2/(dz*tau_k[1]) + (alpha*k*sin(k*z_position))/(tau_k[1] + alpha*tau_k[1]*cos(k*z_position))))/4. );
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+2, nz+3, -(tau_d*tau_d)/(16.*exp((t*tau_d)/(4.*tau_a[1]))*tau*tau_a[1]) );
+//
+//  
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+2, 1);
+//  gsl_matrix_set ( &dRhsdrho_mat.matrix, nz+3, nz+3, 0);
 
 
     
@@ -415,25 +404,25 @@ void print_log_file(const struct lc_cell lc,
 
   printf("\n\nParameters values used:\n\n");
 
-  printf( "Number of Layers(Nz):       %d  \n", lc.nz);
-  printf( "k(in Pi units):  %lf \n",lc.k);
-  printf( "alpha:  %lf \n",lc.alpha);
-  printf( "tau:  %e  \n",lc.tau);
+  printf("Number of Layers(Nz):       %d  \n", lc.nz);
+  printf("k(in Pi units):  %lf \n",lc.k );
+  printf("alpha:   %lf \n", lc.alpha );
+  printf("tau_d:   %g\n", lc.tau_d );
 
   
   printf("\nBoundary conditions:\n\n");
 
-  printf("Boundary_Parameter   bottom       top\n");
+  printf("Boundary_Parameter   bottom      top\n");
+  printf("tau:                 %g       %g\n", lc.tau[0], lc.tau[1]);
   printf("tau_a:               %g       %g\n",lc.tau_a[0],lc.tau_a[1] );
-  printf("tau_d:               %g       %g\n",lc.tau_d[0],lc.tau_d[1] );
   printf("tau_k:               %g       %g\n",lc.tau_k[0],lc.tau_k[1] );
 
 
 
 
   printf("\nTime parameters:\n\n");
-  printf( "maximum timestep (dt):      %e \n",dt);
-  printf( "Simulation time:            %lf  \n",tf);
+  printf( "maximum timestep (dt):      %g \n",dt);
+  printf( "Simulation time:            %g  \n",tf);
 
 
   printf("Initial conditions: %s \n\n",lc.initial_conditions);
@@ -465,7 +454,7 @@ void print_sigma_time(const struct lc_cell lc,
 
   second_moment=average_rho_z_2-(2-average_rho)*average_rho_z_1*average_rho_z_1;
   
-  fprintf(time_file,"%g  %g  %g  %g  %g\n",time, rho[0],rho[nz+3],second_moment, total_particles);
+  fprintf(time_file,"%e  %e  %e  %e  %e\n",time, rho[0],rho[nz+3],second_moment, total_particles);
   fflush(time_file);
 
 }
